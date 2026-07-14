@@ -13,20 +13,22 @@ exports.ThietBiXuLy = void 0;
 const common_1 = require("@nestjs/common");
 const co_so_du_lieu_xu_ly_1 = require("../co-so-du-lieu/co-so-du-lieu.xu-ly");
 const client_1 = require("@prisma/client");
+const AREA_INCLUDE = { area: { select: { id: true, name: true } } };
 let ThietBiXuLy = class ThietBiXuLy {
     constructor(prisma) {
         this.prisma = prisma;
     }
     async findAll() {
         return this.prisma.device.findMany({
+            include: AREA_INCLUDE,
             orderBy: [{ floor: 'asc' }, { name: 'asc' }],
         });
     }
     async findOne(id) {
-        return this.prisma.device.findUnique({ where: { id } });
+        return this.prisma.device.findUnique({ where: { id }, include: AREA_INCLUDE });
     }
     async create(data) {
-        return this.prisma.device.create({ data });
+        return this.prisma.device.create({ data, include: AREA_INCLUDE });
     }
     async update(id, data) {
         if (data.status) {
@@ -35,6 +37,7 @@ let ThietBiXuLy = class ThietBiXuLy {
         return this.prisma.device.update({
             where: { id },
             data: { ...data, last_seen: new Date() },
+            include: AREA_INCLUDE,
         });
     }
     async getStatus(id) {
@@ -46,6 +49,7 @@ let ThietBiXuLy = class ThietBiXuLy {
     async getOnlineDevices() {
         return this.prisma.device.findMany({
             where: { status: client_1.DeviceStatus.online },
+            include: AREA_INCLUDE,
         });
     }
 };

@@ -35,4 +35,4 @@ COPY frontend/ ./frontend/
 EXPOSE 3000
 
 # Use prisma db seed which reads the prisma.seed config from package.json
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npx prisma db seed || true ; node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy || true ; npx prisma db seed || true ; node dist/khoi-dong"]

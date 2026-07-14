@@ -8,7 +8,21 @@
   window.handleAlert = handleAlert;
   window.uploadAudio = uploadAudio;
 
+  loadAreaFilter();
   loadAlerts();
+
+  async function loadAreaFilter() {
+    try {
+      const areas = await api('GET', '/api/areas');
+      const select = document.getElementById('filter-area');
+      areas.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.name;
+        opt.textContent = a.name;
+        select.appendChild(opt);
+      });
+    } catch {}
+  }
 
   async function uploadAudio(event) {
     const file = event.target.files[0];
@@ -108,7 +122,7 @@
           <span class="badge ${status.class}">${status.label}</span>
         </div>
         <div class="alert-card-meta">
-          <span>📍 ${a.device?.area || '?'} — ${a.device?.name || ''}</span>
+          <span>📍 ${a.device?.area?.name || a.device?.area || '?'} — ${a.device?.name || ''}</span>
           <span>🕐 ${formatDateTime(a.timestamp)}</span>
           ${a.handled_by ? `<span>👤 ${a.handled_by.full_name}</span>` : ''}
         </div>

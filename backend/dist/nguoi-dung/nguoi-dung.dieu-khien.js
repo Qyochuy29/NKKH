@@ -32,6 +32,9 @@ let NguoiDungDieuKhien = class NguoiDungDieuKhien {
     update(id, dto) {
         return this.NguoiDungXuLy.update(id, dto);
     }
+    remove(id) {
+        return this.NguoiDungXuLy.remove(id);
+    }
 };
 exports.NguoiDungDieuKhien = NguoiDungDieuKhien;
 __decorate([
@@ -58,6 +61,14 @@ __decorate([
     __metadata("design:paramtypes", [String, nguoi_dung_dto_1.CapNhatNguoiDungDto]),
     __metadata("design:returntype", void 0)
 ], NguoiDungDieuKhien.prototype, "update", null);
+__decorate([
+    (0, common_1.Delete)(':id'),
+    (0, vai_tro_trang_tri_1.Roles)('admin'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], NguoiDungDieuKhien.prototype, "remove", null);
 exports.NguoiDungDieuKhien = NguoiDungDieuKhien = __decorate([
     (0, common_1.Controller)('api/users'),
     (0, common_1.UseGuards)(jwt_xac_thuc_bao_ve_1.BaoVeXacThucJwt, vai_tro_bao_ve_1.BaoVeVaiTro),

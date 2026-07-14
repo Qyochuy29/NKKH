@@ -285,6 +285,7 @@ function renderAppShell(activePageId) {
 
   if (user.role === 'admin') {
     navItems.push({ id: 'users', icon: '👥', label: 'Người dùng', href: '/nguoi-dung.html' });
+    navItems.push({ id: 'areas', icon: '🗺️', label: 'Khu vực', href: '/khu-vuc.html' });
   }
 
   navItems.push({ id: 'settings', icon: '⚙️', label: 'Cài đặt', href: '/cai-dat.html' });
@@ -296,6 +297,7 @@ function renderAppShell(activePageId) {
     statistics: 'Thống kê',
     devices: 'Quản lý thiết bị',
     users: 'Quản lý người dùng',
+    areas: 'Quản lý khu vực',
     settings: 'Cài đặt hệ thống',
   };
 

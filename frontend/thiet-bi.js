@@ -24,11 +24,33 @@
     dot.style.display = 'block';
   });
 
+  async function loadAreas() {
+    try {
+      const areas = await api('GET', '/api/areas');
+      const select = document.getElementById('device-area');
+      const currentVal = select.value;
+      // Keep placeholder, remove rest
+      while (select.options.length > 1) select.remove(1);
+      areas.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.name;
+        select.appendChild(opt);
+      });
+      if (currentVal) select.value = currentVal;
+      return areas;
+    } catch (err) {
+      showToast('Lỗi', 'Không thể tải danh sách khu vực', 'danger');
+      return [];
+    }
+  }
+
   async function loadDevices() {
     try {
       const devices = await api('GET', '/api/devices');
       const tbody = document.getElementById('devices-tbody');
       tbody.innerHTML = devices.map(d => {
+        const areaName = d.area?.name || d.area || '—';
         const statusBadge = d.status === 'online' ? 'badge-online' :
                            d.status === 'error' ? 'badge-error' : 'badge-offline';
         const statusLabel = d.status === 'online' ? 'Hoạt động' :
@@ -38,7 +60,7 @@
         return `
           <tr>
             <td><strong>${d.name}</strong></td>
-            <td>${d.area}</td>
+            <td>${areaName}</td>
             <td>Tầng ${d.floor}</td>
             <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
             <td>
@@ -55,23 +77,23 @@
     }
   }
 
-  function showAddModal() {
+  async function showAddModal() {
     document.getElementById('modal-title').textContent = 'Thêm thiết bị mới';
     document.getElementById('device-id').value = '';
     document.getElementById('device-name').value = '';
-    document.getElementById('device-area').value = '';
     document.getElementById('device-floor').value = '1';
     document.getElementById('device-x').value = '';
     document.getElementById('device-y').value = '';
     document.getElementById('position-dot').style.display = 'none';
+    await loadAreas();
+    document.getElementById('device-area').value = '';
     document.getElementById('device-modal').classList.add('active');
   }
 
-  function editDevice(d) {
+  async function editDevice(d) {
     document.getElementById('modal-title').textContent = 'Sửa thiết bị';
     document.getElementById('device-id').value = d.id;
     document.getElementById('device-name').value = d.name;
-    document.getElementById('device-area').value = d.area;
     document.getElementById('device-floor').value = d.floor;
     document.getElementById('device-x').value = d.position_x.toFixed(1);
     document.getElementById('device-y').value = d.position_y.toFixed(1);
@@ -79,6 +101,10 @@
     dot.setAttribute('cx', (d.position_x / 100) * 400);
     dot.setAttribute('cy', (d.position_y / 100) * 250);
     dot.style.display = 'block';
+    await loadAreas();
+    // Set area value: d.area_id or d.area.id
+    const areaId = d.area_id || d.area?.id || '';
+    document.getElementById('device-area').value = areaId;
     document.getElementById('device-modal').classList.add('active');
   }
 
@@ -88,16 +114,17 @@
 
   async function saveDevice() {
     const id = document.getElementById('device-id').value;
+    const area_id = document.getElementById('device-area').value;
     const data = {
       name: document.getElementById('device-name').value.trim(),
-      area: document.getElementById('device-area').value.trim(),
+      area_id,
       floor: parseInt(document.getElementById('device-floor').value),
       position_x: parseFloat(document.getElementById('device-x').value) || 50,
       position_y: parseFloat(document.getElementById('device-y').value) || 50,
     };
 
-    if (!data.name || !data.area) {
-      showToast('Lỗi', 'Vui lòng nhập tên và khu vực', 'danger');
+    if (!data.name || !data.area_id) {
+      showToast('Lỗi', 'Vui lòng nhập tên và chọn khu vực', 'danger');
       return;
     }
 

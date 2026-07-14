@@ -2,22 +2,31 @@ import { Injectable } from '@nestjs/common';
 import { CoSoDuLieuXuLy } from '../co-so-du-lieu/co-so-du-lieu.xu-ly';
 import { DeviceStatus } from '@prisma/client';
 
+const AREA_INCLUDE = { area: { select: { id: true, name: true } } };
+
 @Injectable()
 export class ThietBiXuLy {
   constructor(private prisma: CoSoDuLieuXuLy) {}
 
   async findAll() {
     return this.prisma.device.findMany({
+      include: AREA_INCLUDE,
       orderBy: [{ floor: 'asc' }, { name: 'asc' }],
     });
   }
 
   async findOne(id: string) {
-    return this.prisma.device.findUnique({ where: { id } });
+    return this.prisma.device.findUnique({ where: { id }, include: AREA_INCLUDE });
   }
 
-  async create(data: { name: string; area: string; floor: number; position_x: number; position_y: number }) {
-    return this.prisma.device.create({ data });
+  async create(data: {
+    name: string;
+    area_id: string;
+    floor: number;
+    position_x: number;
+    position_y: number;
+  }) {
+    return this.prisma.device.create({ data, include: AREA_INCLUDE });
   }
 
   async update(id: string, data: any) {
@@ -27,6 +36,7 @@ export class ThietBiXuLy {
     return this.prisma.device.update({
       where: { id },
       data: { ...data, last_seen: new Date() },
+      include: AREA_INCLUDE,
     });
   }
 
@@ -40,7 +50,7 @@ export class ThietBiXuLy {
   async getOnlineDevices() {
     return this.prisma.device.findMany({
       where: { status: DeviceStatus.online },
+      include: AREA_INCLUDE,
     });
   }
 }
-

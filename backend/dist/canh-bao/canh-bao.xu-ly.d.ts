@@ -16,9 +16,12 @@ export declare class CanhBaoXuLy {
     }, userRole?: string): Promise<{
         data: {
             device: {
+                area: {
+                    id: string;
+                    name: string;
+                };
                 id: string;
                 name: string;
-                area: string;
                 floor: number;
             };
             handled_by: {
@@ -44,7 +47,7 @@ export declare class CanhBaoXuLy {
         device: {
             id: string;
             name: string;
-            area: string;
+            area_id: string;
             floor: number;
             position_x: number;
             position_y: number;
@@ -83,9 +86,12 @@ export declare class CanhBaoXuLy {
     } | null>;
     submitDetection(deviceId: string, soundType: string, confidence: number, audioUrl?: string, notes?: string): Promise<{
         device: {
+            area: {
+                id: string;
+                name: string;
+            };
             id: string;
             name: string;
-            area: string;
             floor: number;
         };
     } & {
@@ -103,9 +109,12 @@ export declare class CanhBaoXuLy {
     }>;
     analyzeUploadedAudio(audioUrl: string, originalName?: string): Promise<{
         device: {
+            area: {
+                id: string;
+                name: string;
+            };
             id: string;
             name: string;
-            area: string;
             floor: number;
         };
     } & {
@@ -127,9 +136,12 @@ export declare class CanhBaoXuLy {
         is_evidence?: boolean;
     }, userId: string): Promise<{
         device: {
+            area: {
+                id: string;
+                name: string;
+            };
             id: string;
             name: string;
-            area: string;
             floor: number;
         };
         handled_by: {

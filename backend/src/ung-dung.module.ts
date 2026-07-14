@@ -11,16 +11,17 @@ import { CanhBaoModule } from './canh-bao/canh-bao.module';
 import { ThongKeModule } from './thong-ke/thong-ke.module';
 import { CaiDatModule } from './cai-dat/cai-dat.module';
 import { AiGiaLapModule } from './ai-gia-lap/ai-gia-lap.module';
+import { KhuVucModule } from './khu-vuc/khu-vuc.module';
 
 @Module({
   imports: [
     ServeStaticModule.forRoot(
       {
-        rootPath: join(__dirname, '..', '..', 'frontend'),
+        rootPath: join(__dirname, '..', 'frontend'),
         serveRoot: '/',
       },
       {
-        rootPath: join(__dirname, '..', '..', 'tai-lieu'),
+        rootPath: join(__dirname, '..', 'uploads'),
         serveRoot: '/uploads',
       }
     ),
@@ -34,6 +35,7 @@ import { AiGiaLapModule } from './ai-gia-lap/ai-gia-lap.module';
     ThongKeModule,
     CaiDatModule,
     AiGiaLapModule,
+    KhuVucModule,
   ],
 })
 export class UngDungModule {}

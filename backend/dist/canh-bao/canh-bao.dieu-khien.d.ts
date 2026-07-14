@@ -6,9 +6,12 @@ export declare class CanhBaoDieuKhien {
     findAll(query: TruyVanCanhBaoDto, req: any): Promise<{
         data: {
             device: {
+                area: {
+                    id: string;
+                    name: string;
+                };
                 id: string;
                 name: string;
-                area: string;
                 floor: number;
             };
             handled_by: {
@@ -34,7 +37,7 @@ export declare class CanhBaoDieuKhien {
         device: {
             id: string;
             name: string;
-            area: string;
+            area_id: string;
             floor: number;
             position_x: number;
             position_y: number;
@@ -73,9 +76,12 @@ export declare class CanhBaoDieuKhien {
     } | null>;
     create(dto: TaoCanhBaoDto): Promise<{
         device: {
+            area: {
+                id: string;
+                name: string;
+            };
             id: string;
             name: string;
-            area: string;
             floor: number;
         };
     } & {
@@ -93,9 +99,12 @@ export declare class CanhBaoDieuKhien {
     }>;
     uploadAudio(file: Express.Multer.File, req: any): Promise<({
         device: {
+            area: {
+                id: string;
+                name: string;
+            };
             id: string;
             name: string;
-            area: string;
             floor: number;
         };
     } & {
@@ -115,9 +124,12 @@ export declare class CanhBaoDieuKhien {
     }>;
     update(id: string, dto: CapNhatCanhBaoDto, req: any): Promise<{
         device: {
+            area: {
+                id: string;
+                name: string;
+            };
             id: string;
             name: string;
-            area: string;
             floor: number;
         };
         handled_by: {

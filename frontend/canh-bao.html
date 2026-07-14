@@ -28,7 +28,9 @@
           <option value="false_alarm">Báo động giả</option>
           <option value="resolved">Đã xử lý</option>
         </select>
-        <input type="text" class="form-control" id="filter-area" placeholder="Tìm theo khu vực...">
+        <select class="form-control" id="filter-area">
+          <option value="">Tất cả khu vực</option>
+        </select>
         <button class="btn btn-primary" onclick="loadAlerts()">🔍 Lọc</button>
         <button class="btn btn-outline" onclick="clearFilters()">Xoá lọc</button>
         <div style="flex-grow: 1;"></div>

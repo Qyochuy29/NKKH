@@ -3,21 +3,31 @@ import { TaoThietBiDto, CapNhatThietBiDto } from './du-lieu-vao/thiet-bi.dto';
 export declare class ThietBiDieuKhien {
     private ThietBiXuLy;
     constructor(ThietBiXuLy: ThietBiXuLy);
-    findAll(): Promise<{
+    findAll(): Promise<({
+        area: {
+            id: string;
+            name: string;
+        };
+    } & {
         id: string;
         name: string;
-        area: string;
+        area_id: string;
         floor: number;
         position_x: number;
         position_y: number;
         status: import(".prisma/client").$Enums.DeviceStatus;
         battery_level: number;
         last_seen: Date;
-    }[]>;
+    })[]>;
     create(dto: TaoThietBiDto): Promise<{
+        area: {
+            id: string;
+            name: string;
+        };
+    } & {
         id: string;
         name: string;
-        area: string;
+        area_id: string;
         floor: number;
         position_x: number;
         position_y: number;
@@ -26,9 +36,14 @@ export declare class ThietBiDieuKhien {
         last_seen: Date;
     }>;
     update(id: string, dto: CapNhatThietBiDto): Promise<{
+        area: {
+            id: string;
+            name: string;
+        };
+    } & {
         id: string;
         name: string;
-        area: string;
+        area_id: string;
         floor: number;
         position_x: number;
         position_y: number;

@@ -13,7 +13,21 @@
   window.showDetail = showDetail;
   window.goPage = goPage;
 
+  loadAreaFilter();
   loadHistory();
+
+  async function loadAreaFilter() {
+    try {
+      const areas = await api('GET', '/api/areas');
+      const select = document.getElementById('filter-area');
+      areas.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a.name;
+        opt.textContent = a.name;
+        select.appendChild(opt);
+      });
+    } catch {}
+  }
 
   async function loadHistory() {
     const from = document.getElementById('filter-from').value;
@@ -52,7 +66,7 @@
         <tr style="cursor:pointer" onclick="showDetail('${a.id}')">
           <td>${formatDateTime(a.timestamp)}</td>
           <td>${type.icon} ${type.label}</td>
-          <td>${a.device?.area || '?'}</td>
+          <td>${a.device?.area?.name || a.device?.area || '?'}</td>
           <td>${a.device?.name || '?'}</td>
           <td>
             <span class="confidence-bar"><span class="confidence-bar-fill" style="width:${a.confidence_score}%;background:${getConfidenceColor(a.confidence_score)}"></span></span>
@@ -111,7 +125,7 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
           <div><strong>Loại âm thanh:</strong> ${type.icon} ${type.label}</div>
           <div><strong>Trạng thái:</strong> <span class="badge ${status.class}">${status.label}</span></div>
-          <div><strong>Khu vực:</strong> ${alert.device?.area || '?'}</div>
+          <div><strong>Khu vực:</strong> ${alert.device?.area?.name || alert.device?.area || '?'}</div>
           <div><strong>Thiết bị:</strong> ${alert.device?.name || '?'}</div>
           <div><strong>Confidence:</strong> ${alert.confidence_score.toFixed(1)}%</div>
           <div><strong>Thời gian:</strong> ${formatDateTime(alert.timestamp)}</div>
@@ -149,7 +163,7 @@
     const rows = currentData.map(a => [
       formatDateTime(a.timestamp),
       SOUND_TYPE_LABELS[a.sound_type]?.label || a.sound_type,
-      a.device?.area || '',
+      a.device?.area?.name || a.device?.area || '',
       a.device?.name || '',
       a.confidence_score.toFixed(1) + '%',
       STATUS_LABELS[a.status]?.label || a.status,

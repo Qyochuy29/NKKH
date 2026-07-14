@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý khu vực — SafeVoice AI</title>
+  <meta name="description" content="Quản lý các khu vực giám sát trong hệ thống SafeVoice AI">
+  <link rel="stylesheet" href="/giao-dien.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-shell"></div>
+    <main class="main-content">
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="font-size:16px;">🗺️ Danh sách khu vực giám sát</h3>
+        <button class="btn btn-primary" id="btn-add-area" onclick="showAddAreaModal()">+ Thêm khu vực</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Tên khu vực</th>
+                  <th>Mô tả</th>
+                  <th>Số thiết bị</th>
+                  <th>Ngày tạo</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="areas-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add/Edit Modal -->
+      <div class="modal-overlay" id="area-modal">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 id="area-modal-title">Thêm khu vực</h3>
+            <button class="modal-close" onclick="closeAreaModal()">✕</button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="area-id">
+            <div class="form-group">
+              <label>Tên khu vực <span style="color:var(--danger)">*</span></label>
+              <input type="text" class="form-control" id="area-name" placeholder="VD: Hành lang T1">
+            </div>
+            <div class="form-group">
+              <label>Mô tả</label>
+              <input type="text" class="form-control" id="area-description" placeholder="VD: Hành lang tầng 1 khu A và B">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeAreaModal()">Huỷ</button>
+            <button class="btn btn-primary" id="area-save-btn" onclick="saveArea()">Lưu</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete Confirm Modal -->
+      <div class="modal-overlay" id="area-delete-modal">
+        <div class="modal" style="max-width:440px;">
+          <div class="modal-header">
+            <h3>Xác nhận xoá</h3>
+            <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+          </div>
+          <div class="modal-body">
+            <p id="area-delete-msg" style="color:var(--text-secondary);line-height:1.6;"></p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeDeleteModal()">Huỷ</button>
+            <button class="btn btn-danger" id="area-delete-confirm-btn" onclick="confirmDelete()">🗑️ Xoá</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="/dung-chung.js"></script>
+  <script src="/khu-vuc.js"></script>
+</body>
+</html>

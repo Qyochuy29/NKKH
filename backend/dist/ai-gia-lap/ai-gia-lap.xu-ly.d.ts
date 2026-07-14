@@ -11,9 +11,12 @@ export declare class AiGiaLapXuLy implements OnModuleInit {
     private scheduleNext;
     generateAlert(): Promise<({
         device: {
+            area: {
+                id: string;
+                name: string;
+            };
             id: string;
             name: string;
-            area: string;
             floor: number;
         };
     } & {
@@ -31,9 +34,12 @@ export declare class AiGiaLapXuLy implements OnModuleInit {
     }) | undefined>;
     submitDetection(deviceId: string, soundType: string, confidence: number, audioUrl?: string): Promise<{
         device: {
+            area: {
+                id: string;
+                name: string;
+            };
             id: string;
             name: string;
-            area: string;
             floor: number;
         };
     } & {

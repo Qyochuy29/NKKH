@@ -102,6 +102,11 @@ let NguoiDungXuLy = class NguoiDungXuLy {
             },
         });
     }
+    async remove(id) {
+        return this.prisma.user.delete({
+            where: { id },
+        });
+    }
 };
 exports.NguoiDungXuLy = NguoiDungXuLy;
 exports.NguoiDungXuLy = NguoiDungXuLy = __decorate([

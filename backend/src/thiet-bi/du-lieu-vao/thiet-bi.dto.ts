@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 
 export class TaoThietBiDto {
   @IsString()
@@ -7,7 +7,7 @@ export class TaoThietBiDto {
 
   @IsString()
   @IsNotEmpty()
-  area: string;
+  area_id: string;
 
   @IsInt()
   @Min(1)
@@ -32,7 +32,7 @@ export class CapNhatThietBiDto {
 
   @IsOptional()
   @IsString()
-  area?: string;
+  area_id?: string;
 
   @IsOptional()
   @IsInt()
@@ -56,4 +56,3 @@ export class CapNhatThietBiDto {
   @Max(100)
   battery_level?: number;
 }
-

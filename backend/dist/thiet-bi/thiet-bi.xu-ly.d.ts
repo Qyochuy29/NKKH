@@ -2,38 +2,53 @@ import { CoSoDuLieuXuLy } from '../co-so-du-lieu/co-so-du-lieu.xu-ly';
 export declare class ThietBiXuLy {
     private prisma;
     constructor(prisma: CoSoDuLieuXuLy);
-    findAll(): Promise<{
+    findAll(): Promise<({
+        area: {
+            id: string;
+            name: string;
+        };
+    } & {
         id: string;
         name: string;
-        area: string;
+        area_id: string;
         floor: number;
         position_x: number;
         position_y: number;
         status: import(".prisma/client").$Enums.DeviceStatus;
         battery_level: number;
         last_seen: Date;
-    }[]>;
-    findOne(id: string): Promise<{
+    })[]>;
+    findOne(id: string): Promise<({
+        area: {
+            id: string;
+            name: string;
+        };
+    } & {
         id: string;
         name: string;
-        area: string;
+        area_id: string;
         floor: number;
         position_x: number;
         position_y: number;
         status: import(".prisma/client").$Enums.DeviceStatus;
         battery_level: number;
         last_seen: Date;
-    } | null>;
+    }) | null>;
     create(data: {
         name: string;
-        area: string;
+        area_id: string;
         floor: number;
         position_x: number;
         position_y: number;
     }): Promise<{
+        area: {
+            id: string;
+            name: string;
+        };
+    } & {
         id: string;
         name: string;
-        area: string;
+        area_id: string;
         floor: number;
         position_x: number;
         position_y: number;
@@ -42,9 +57,14 @@ export declare class ThietBiXuLy {
         last_seen: Date;
     }>;
     update(id: string, data: any): Promise<{
+        area: {
+            id: string;
+            name: string;
+        };
+    } & {
         id: string;
         name: string;
-        area: string;
+        area_id: string;
         floor: number;
         position_x: number;
         position_y: number;
@@ -59,15 +79,20 @@ export declare class ThietBiXuLy {
         battery_level: number;
         last_seen: Date;
     } | null>;
-    getOnlineDevices(): Promise<{
+    getOnlineDevices(): Promise<({
+        area: {
+            id: string;
+            name: string;
+        };
+    } & {
         id: string;
         name: string;
-        area: string;
+        area_id: string;
         floor: number;
         position_x: number;
         position_y: number;
         status: import(".prisma/client").$Enums.DeviceStatus;
         battery_level: number;
         last_seen: Date;
-    }[]>;
+    })[]>;
 }

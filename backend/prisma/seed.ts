@@ -53,8 +53,41 @@ async function main() {
 
   console.log(`✅ Created ${users.length} users`);
 
+  // --- Areas ---
+  const areaNames = [
+    'Sân trường',
+    'Cổng trường',
+    'Nhà xe',
+    'Canteen',
+    'Hành lang T1',
+    'Phòng học T1',
+    'Nhà vệ sinh T1',
+    'Phòng bảo vệ',
+    'Hành lang T2',
+    'Phòng học T2',
+    'Nhà vệ sinh T2',
+    'Phòng GV',
+    'Thư viện',
+    'Phòng TN',
+    'Cầu thang',
+    'Hành lang T3',
+    'Phòng học T3',
+    'Nhà vệ sinh T3',
+    'Sân thượng',
+    'Phòng tin học',
+    'Phòng nhạc',
+    'Phòng họp',
+  ];
+
+  const areaRecords = await Promise.all(
+    areaNames.map(name => prisma.area.create({ data: { name } }))
+  );
+  const areaMap = Object.fromEntries(areaRecords.map(a => [a.name, a.id]));
+
+  console.log(`✅ Created ${areaRecords.length} areas`);
+
   // --- Devices ---
-  const areas = [
+  const deviceList = [
     // Floor 1
     { name: 'Sân trường chính', area: 'Sân trường', floor: 1 },
     { name: 'Cổng trường', area: 'Cổng trường', floor: 1 },
@@ -106,13 +139,13 @@ async function main() {
   ];
 
   const devices: any[] = [];
-  for (let i = 0; i < areas.length; i++) {
-    const a = areas[i];
+  for (let i = 0; i < deviceList.length; i++) {
+    const a = deviceList[i];
     const statusOptions: DeviceStatus[] = [DeviceStatus.online, DeviceStatus.online, DeviceStatus.online, DeviceStatus.offline, DeviceStatus.error];
     const device = await prisma.device.create({
       data: {
         name: `MIC-${String(i + 1).padStart(3, '0')}`,
-        area: a.area,
+        area_id: areaMap[a.area],
         floor: a.floor,
         position_x: 5 + Math.random() * 90,
         position_y: 5 + Math.random() * 90,

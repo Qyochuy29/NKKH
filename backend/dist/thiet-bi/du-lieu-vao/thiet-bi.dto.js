@@ -23,7 +23,7 @@ __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], TaoThietBiDto.prototype, "area", void 0);
+], TaoThietBiDto.prototype, "area_id", void 0);
 __decorate([
     (0, class_validator_1.IsInt)(),
     (0, class_validator_1.Min)(1),
@@ -54,7 +54,7 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CapNhatThietBiDto.prototype, "area", void 0);
+], CapNhatThietBiDto.prototype, "area_id", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),

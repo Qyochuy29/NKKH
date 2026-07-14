@@ -24,4 +24,12 @@ export declare class NguoiDungDieuKhien {
         role: import(".prisma/client").$Enums.Role;
         created_at: Date;
     }>;
+    remove(id: string): Promise<{
+        id: string;
+        email: string;
+        full_name: string;
+        password_hash: string;
+        role: import(".prisma/client").$Enums.Role;
+        created_at: Date;
+    }>;
 }

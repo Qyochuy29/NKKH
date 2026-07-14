@@ -37,13 +37,13 @@ let CanhBaoXuLy = class CanhBaoXuLy {
             where.status = query.status;
         }
         if (query.area) {
-            where.device = { area: { contains: query.area, mode: 'insensitive' } };
+            where.device = { area: { name: { contains: query.area, mode: 'insensitive' } } };
         }
         const [data, total] = await Promise.all([
             this.prisma.alert.findMany({
                 where,
                 include: {
-                    device: { select: { id: true, name: true, area: true, floor: true } },
+                    device: { select: { id: true, name: true, area: { select: { id: true, name: true } }, floor: true } },
                     handled_by: { select: { id: true, full_name: true } },
                 },
                 orderBy: { timestamp: 'desc' },
@@ -90,7 +90,7 @@ let CanhBaoXuLy = class CanhBaoXuLy {
                 status: client_1.AlertStatus.pending,
             },
             include: {
-                device: { select: { id: true, name: true, area: true, floor: true } },
+                device: { select: { id: true, name: true, area: { select: { id: true, name: true } }, floor: true } },
             },
         });
         await this.redis.publish('new-alert', JSON.stringify(alert));
@@ -153,7 +153,7 @@ let CanhBaoXuLy = class CanhBaoXuLy {
             where: { id },
             data: updateData,
             include: {
-                device: { select: { id: true, name: true, area: true, floor: true } },
+                device: { select: { id: true, name: true, area: { select: { id: true, name: true } }, floor: true } },
                 handled_by: { select: { id: true, full_name: true } },
             },
         });

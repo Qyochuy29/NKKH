@@ -28,7 +28,9 @@
           <option value="false_alarm">Báo động giả</option>
           <option value="resolved">Đã xử lý</option>
         </select>
-        <input type="text" class="form-control" id="filter-area" placeholder="Khu vực...">
+        <select class="form-control" id="filter-area">
+          <option value="">Tất cả khu vực</option>
+        </select>
         <button class="btn btn-primary" onclick="loadHistory()">🔍 Lọc</button>
         <button class="btn btn-outline" onclick="exportCSV()">📥 Xuất CSV</button>
       </div>

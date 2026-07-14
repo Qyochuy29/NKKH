@@ -20,6 +20,7 @@ const canh_bao_module_1 = require("./canh-bao/canh-bao.module");
 const thong_ke_module_1 = require("./thong-ke/thong-ke.module");
 const cai_dat_module_1 = require("./cai-dat/cai-dat.module");
 const ai_gia_lap_module_1 = require("./ai-gia-lap/ai-gia-lap.module");
+const khu_vuc_module_1 = require("./khu-vuc/khu-vuc.module");
 let UngDungModule = class UngDungModule {
 };
 exports.UngDungModule = UngDungModule;
@@ -43,6 +44,7 @@ exports.UngDungModule = UngDungModule = __decorate([
             thong_ke_module_1.ThongKeModule,
             cai_dat_module_1.CaiDatModule,
             ai_gia_lap_module_1.AiGiaLapModule,
+            khu_vuc_module_1.KhuVucModule,
         ],
     })
 ], UngDungModule);

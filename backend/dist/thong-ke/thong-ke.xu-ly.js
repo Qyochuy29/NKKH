@@ -68,11 +68,11 @@ let ThongKeXuLy = class ThongKeXuLy {
     }
     async getByArea() {
         const alerts = await this.prisma.alert.findMany({
-            include: { device: { select: { area: true } } },
+            include: { device: { select: { area: { select: { name: true } } } } },
         });
         const areaMap = {};
         alerts.forEach((a) => {
-            const area = a.device.area;
+            const area = a.device.area.name;
             areaMap[area] = (areaMap[area] || 0) + 1;
         });
         return Object.entries(areaMap)
@@ -124,11 +124,11 @@ let ThongKeXuLy = class ThongKeXuLy {
     async getHeatmap() {
         const alerts = await this.prisma.alert.findMany({
             where: { timestamp: { gte: new Date(Date.now() - 30 * 86400000) } },
-            select: { timestamp: true, device: { select: { area: true } } },
+            select: { timestamp: true, device: { select: { area: { select: { name: true } } } } },
         });
         const heatmap = {};
         alerts.forEach((a) => {
-            const area = a.device.area;
+            const area = a.device.area.name;
             const hour = a.timestamp.getHours();
             if (!heatmap[area])
                 heatmap[area] = {};

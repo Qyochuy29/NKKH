@@ -48,10 +48,21 @@ model User {
   @@map("users")
 }
 
+model Area {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  created_at  DateTime @default(now())
+
+  devices Device[]
+
+  @@map("areas")
+}
+
 model Device {
   id            String       @id @default(uuid())
   name          String
-  area          String
+  area_id       String
   floor         Int
   position_x    Float
   position_y    Float
@@ -59,6 +70,7 @@ model Device {
   battery_level Int          @default(100)
   last_seen     DateTime     @default(now())
 
+  area   Area    @relation(fields: [area_id], references: [id])
   alerts Alert[]
 
   @@map("devices")
