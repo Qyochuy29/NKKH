@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: sg-postgres
+    environment:
+      POSTGRES_DB: school_guardian
+      POSTGRES_USER: sguser
+      POSTGRES_PASSWORD: sgpassword123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sguser -d school_guardian"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: sg-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: sg-backend
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://sguser:sgpassword123@postgres:5432/school_guardian
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: school-guardian-jwt-secret-key-2024
+      JWT_REFRESH_SECRET: school-guardian-refresh-secret-key-2024
+      MOCK_AI_ENABLED: "true"
+      MOCK_AI_INTERVAL_MIN: "15000"
+      MOCK_AI_INTERVAL_MAX: "40000"
+      PORT: "3000"
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./frontend:/app/frontend
+      - ./tai-lieu:/app/uploads
+
+  ai-service:
+    build:
+      context: ./huan-luyen-ai
+    container_name: sg-ai
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./tai-lieu:/app/uploads
+    restart: unless-stopped
+
+volumes:
+  pg_data:

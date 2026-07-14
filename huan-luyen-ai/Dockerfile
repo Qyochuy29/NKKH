@@ -1,0 +1,17 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Cài đặt các gói hệ thống cần thiết cho soundfile (libsndfile1)
+RUN apt-get update && apt-get install -y libsndfile1 && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+
+# Cài đặt requirements
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["python", "may-chu-ai.py"]

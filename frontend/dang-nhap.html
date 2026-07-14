@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập — SafeVoice AI</title>
+  <meta name="description" content="Hệ thống giám sát và cảnh báo bạo lực học đường">
+  <link rel="stylesheet" href="/giao-dien.css">
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-icon"><img src="/logo.png" alt="Logo"></div>
+        <h1>SafeVoice AI</h1>
+        <p>Hệ thống giám sát an ninh trường học</p>
+      </div>
+
+      <div class="login-error" id="login-error"></div>
+
+      <form id="login-form" onsubmit="return false;">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" class="form-control" placeholder="Nhập email..." required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="password">Mật khẩu</label>
+          <input type="password" id="password" class="form-control" placeholder="Nhập mật khẩu..." required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary login-btn" id="login-btn">
+          Đăng nhập
+        </button>
+      </form>
+
+      <div style="margin-top:24px;text-align:center;color:rgba(255,255,255,0.35);font-size:12px;">
+        <p>Demo: giamthi@gmail.com / password123</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/dung-chung.js"></script>
+  <script src="/dang-nhap.js"></script>
+</body>
+</html>

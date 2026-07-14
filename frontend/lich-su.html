@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lịch sử cảnh báo — SafeVoice AI</title>
+  <link rel="stylesheet" href="/giao-dien.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-shell"></div>
+    <main class="main-content">
+
+      <div class="filters-bar">
+        <input type="date" class="form-control" id="filter-from">
+        <input type="date" class="form-control" id="filter-to">
+        <select class="form-control" id="filter-type">
+          <option value="">Tất cả loại</option>
+          <option value="scream">La hét</option>
+          <option value="help">Kêu cứu</option>
+          <option value="threat">Đe dọa</option>
+          <option value="argument">Cãi vã</option>
+        </select>
+        <select class="form-control" id="filter-status">
+          <option value="">Tất cả trạng thái</option>
+          <option value="pending">Chờ xử lý</option>
+          <option value="confirmed">Đã xác nhận</option>
+          <option value="false_alarm">Báo động giả</option>
+          <option value="resolved">Đã xử lý</option>
+        </select>
+        <input type="text" class="form-control" id="filter-area" placeholder="Khu vực...">
+        <button class="btn btn-primary" onclick="loadHistory()">🔍 Lọc</button>
+        <button class="btn btn-outline" onclick="exportCSV()">📥 Xuất CSV</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Loại</th>
+                  <th>Khu vực</th>
+                  <th>Thiết bị</th>
+                  <th>Confidence</th>
+                  <th>Trạng thái</th>
+                  <th>Người xử lý</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+
+      <!-- Detail Modal -->
+      <div class="modal-overlay" id="detail-modal">
+        <div class="modal">
+          <div class="modal-header">
+            <h3>📋 Chi tiết cảnh báo</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+          </div>
+          <div class="modal-body" id="modal-body"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="/dung-chung.js"></script>
+  <script src="/lich-su.js"></script>
+</body>
+</html>

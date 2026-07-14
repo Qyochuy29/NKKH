@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thống kê — SafeVoice AI</title>
+  <link rel="stylesheet" href="/giao-dien.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-shell"></div>
+    <main class="main-content">
+
+      <div class="grid-2">
+        <!-- Bar chart: by type -->
+        <div class="card">
+          <div class="card-header"><h3>📊 Cảnh báo theo loại âm thanh</h3></div>
+          <div class="card-body"><canvas id="type-chart" height="200"></canvas></div>
+        </div>
+
+        <!-- Pie chart: ratio -->
+        <div class="card">
+          <div class="card-header"><h3>🥧 Tỷ lệ xác nhận / báo động giả</h3></div>
+          <div class="card-body"><canvas id="ratio-chart" height="200"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Line chart: trend -->
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+          <h3>📈 Xu hướng cảnh báo</h3>
+          <select class="form-control" id="trend-period" style="width:auto" onchange="loadTrend()">
+            <option value="day">7 ngày</option>
+            <option value="week">4 tuần</option>
+            <option value="month">6 tháng</option>
+          </select>
+        </div>
+        <div class="card-body"><canvas id="trend-chart" height="100"></canvas></div>
+      </div>
+
+      <!-- Heatmap -->
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header"><h3>🔥 Heatmap — Khu vực × Khung giờ</h3></div>
+        <div class="card-body">
+          <div id="heatmap-container" style="overflow-x:auto;"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="/dung-chung.js"></script>
+  <script src="/thong-ke.js"></script>
+</body>
+</html>

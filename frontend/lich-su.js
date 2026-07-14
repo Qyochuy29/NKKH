@@ -1,0 +1,169 @@
+// lich-su.js — Alert history page
+(function() {
+  const user = initPage('history');
+  if (!user) return;
+
+  let currentOffset = 0;
+  const pageSize = 20;
+  let currentData = [];
+
+  window.loadHistory = loadHistory;
+  window.exportCSV = exportCSV;
+  window.closeModal = closeModal;
+  window.showDetail = showDetail;
+  window.goPage = goPage;
+
+  loadHistory();
+
+  async function loadHistory() {
+    const from = document.getElementById('filter-from').value;
+    const to = document.getElementById('filter-to').value;
+    const type = document.getElementById('filter-type').value;
+    const status = document.getElementById('filter-status').value;
+    const area = document.getElementById('filter-area').value;
+
+    let url = `/api/alerts?offset=${currentOffset}&limit=${pageSize}`;
+    if (from) url += `&date_from=${from}`;
+    if (to) url += `&date_to=${to}T23:59:59`;
+    if (type) url += `&sound_type=${type}`;
+    if (status) url += `&status=${status}`;
+    if (area) url += `&area=${encodeURIComponent(area)}`;
+
+    try {
+      const result = await api('GET', url);
+      currentData = result.data;
+      renderTable(result.data);
+      renderPagination(result.total);
+    } catch (err) {
+      showToast('Lỗi', err.message, 'danger');
+    }
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById('history-tbody');
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">Không có dữ liệu</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(a => {
+      const type = SOUND_TYPE_LABELS[a.sound_type] || { icon: '❓', label: a.sound_type };
+      const status = STATUS_LABELS[a.status] || { label: a.status, class: 'badge-muted' };
+      return `
+        <tr style="cursor:pointer" onclick="showDetail('${a.id}')">
+          <td>${formatDateTime(a.timestamp)}</td>
+          <td>${type.icon} ${type.label}</td>
+          <td>${a.device?.area || '?'}</td>
+          <td>${a.device?.name || '?'}</td>
+          <td>
+            <span class="confidence-bar"><span class="confidence-bar-fill" style="width:${a.confidence_score}%;background:${getConfidenceColor(a.confidence_score)}"></span></span>
+            ${a.confidence_score.toFixed(0)}%
+          </td>
+          <td><span class="badge ${status.class}">${status.label}</span></td>
+          <td>${a.handled_by?.full_name || '—'}</td>
+          <td><button class="btn btn-outline btn-sm btn-icon" title="Chi tiết">📄</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderPagination(total) {
+    const pages = Math.ceil(total / pageSize);
+    const current = Math.floor(currentOffset / pageSize) + 1;
+    const pg = document.getElementById('pagination');
+
+    if (pages <= 1) { pg.innerHTML = ''; return; }
+
+    let html = `<span class="pagination-info">Trang ${current}/${pages} (${total} kết quả)</span>`;
+    html += `<button class="btn btn-outline btn-sm" onclick="goPage(${current - 1})" ${current <= 1 ? 'disabled' : ''}>← Trước</button>`;
+    html += `<button class="btn btn-outline btn-sm" onclick="goPage(${current + 1})" ${current >= pages ? 'disabled' : ''}>Sau →</button>`;
+    pg.innerHTML = html;
+  }
+
+  function goPage(page) {
+    currentOffset = (page - 1) * pageSize;
+    if (currentOffset < 0) currentOffset = 0;
+    loadHistory();
+  }
+
+  async function showDetail(id) {
+    try {
+      const alert = await api('GET', `/api/alerts/${id}`);
+      const type = SOUND_TYPE_LABELS[alert.sound_type] || { icon: '❓', label: alert.sound_type };
+      const status = STATUS_LABELS[alert.status] || { label: alert.status, class: 'badge-muted' };
+
+      let logsHtml = '';
+      if (alert.logs && alert.logs.length > 0) {
+        logsHtml = `
+          <h4 style="margin:16px 0 8px;">📋 Nhật ký xử lý</h4>
+          <div class="timeline">
+            ${alert.logs.map(l => `
+              <div class="timeline-item">
+                <div class="timeline-action">${l.action}</div>
+                <div class="timeline-actor">👤 ${l.actor?.full_name || '?'}</div>
+                <div class="timeline-time">${formatDateTime(l.timestamp)}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      document.getElementById('modal-body').innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div><strong>Loại âm thanh:</strong> ${type.icon} ${type.label}</div>
+          <div><strong>Trạng thái:</strong> <span class="badge ${status.class}">${status.label}</span></div>
+          <div><strong>Khu vực:</strong> ${alert.device?.area || '?'}</div>
+          <div><strong>Thiết bị:</strong> ${alert.device?.name || '?'}</div>
+          <div><strong>Confidence:</strong> ${alert.confidence_score.toFixed(1)}%</div>
+          <div><strong>Thời gian:</strong> ${formatDateTime(alert.timestamp)}</div>
+          <div><strong>Người xử lý:</strong> ${alert.handled_by?.full_name || '—'}</div>
+          <div><strong>Xử lý lúc:</strong> ${alert.resolved_at ? formatDateTime(alert.resolved_at) : '—'}</div>
+        </div>
+        ${alert.notes ? `<div style="margin-bottom:12px;"><strong>Ghi chú:</strong> ${alert.notes}</div>` : ''}
+        ${alert.audio_file_url ? `<div style="margin-bottom:12px;"><strong>Audio:</strong><br><audio controls style="margin-top:4px;"><source src="${alert.audio_file_url}" type="audio/mpeg"></audio></div>` : ''}
+        <div><strong>Bằng chứng:</strong> ${alert.is_evidence ? '✅ Đã đánh dấu' : '❌ Không'}</div>
+        ${logsHtml}
+      `;
+
+      document.getElementById('detail-modal').classList.add('active');
+    } catch (err) {
+      showToast('Lỗi', err.message, 'danger');
+    }
+  }
+
+  function closeModal() {
+    document.getElementById('detail-modal').classList.remove('active');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('detail-modal').addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-overlay')) closeModal();
+  });
+
+  function exportCSV() {
+    if (currentData.length === 0) {
+      showToast('Thông báo', 'Không có dữ liệu để xuất', 'info');
+      return;
+    }
+
+    const headers = ['Thời gian', 'Loại', 'Khu vực', 'Thiết bị', 'Confidence', 'Trạng thái', 'Người xử lý', 'Ghi chú'];
+    const rows = currentData.map(a => [
+      formatDateTime(a.timestamp),
+      SOUND_TYPE_LABELS[a.sound_type]?.label || a.sound_type,
+      a.device?.area || '',
+      a.device?.name || '',
+      a.confidence_score.toFixed(1) + '%',
+      STATUS_LABELS[a.status]?.label || a.status,
+      a.handled_by?.full_name || '',
+      (a.notes || '').replace(/,/g, ';'),
+    ]);
+
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `canh-bao-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+
+    showToast('Thành công', 'Đã tải xuống file CSV', 'success');
+  }
+})();

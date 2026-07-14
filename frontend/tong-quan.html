@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tổng quan — SafeVoice AI</title>
+  <meta name="description" content="Dashboard tổng quan giám sát an ninh trường học">
+  <link rel="stylesheet" href="/giao-dien.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-shell"></div>
+    <main class="main-content" id="page-content">
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card blue">
+          <div class="kpi-header">
+            <span class="kpi-label">Thiết bị hoạt động</span>
+            <div class="kpi-icon">🎙️</div>
+          </div>
+          <div class="kpi-value" id="kpi-devices">--</div>
+          <div class="kpi-sub" id="kpi-devices-sub"></div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-header">
+            <span class="kpi-label">Cảnh báo hôm nay</span>
+            <div class="kpi-icon">🚨</div>
+          </div>
+          <div class="kpi-value" id="kpi-alerts">--</div>
+          <div class="kpi-sub">Tính từ 00:00</div>
+        </div>
+        <div class="kpi-card yellow">
+          <div class="kpi-header">
+            <span class="kpi-label">Khẩn cấp chưa xử lý</span>
+            <div class="kpi-icon">⚠️</div>
+          </div>
+          <div class="kpi-value" id="kpi-urgent">--</div>
+          <div class="kpi-sub">Confidence ≥ 80%</div>
+        </div>
+        <div class="kpi-card green">
+          <div class="kpi-header">
+            <span class="kpi-label">TG phản hồi TB</span>
+            <div class="kpi-icon">⏱️</div>
+          </div>
+          <div class="kpi-value" id="kpi-response">--</div>
+          <div class="kpi-sub">7 ngày gần nhất</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- School Map -->
+        <div class="card">
+          <div class="card-header">
+            <h3>🏫 Sơ đồ trường học</h3>
+            <div class="floor-tabs" id="floor-tabs">
+              <button class="floor-tab active" data-floor="1">Tầng 1</button>
+              <button class="floor-tab" data-floor="2">Tầng 2</button>
+              <button class="floor-tab" data-floor="3">Tầng 3</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="school-map-container" id="school-map">
+              <svg viewBox="0 0 800 500" id="map-svg"></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Alert Feed -->
+        <div class="card">
+          <div class="card-header">
+            <h3>🔴 Cảnh báo mới nhất</h3>
+            <a href="/canh-bao.html" class="btn btn-outline btn-sm">Xem tất cả</a>
+          </div>
+          <div class="card-body" style="max-height:400px;overflow-y:auto;">
+            <div id="alert-feed"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hourly Trend Chart -->
+      <div class="card" style="margin-top:20px;">
+        <div class="card-header">
+          <h3>📈 Xu hướng cảnh báo theo giờ hôm nay</h3>
+        </div>
+        <div class="card-body">
+          <canvas id="hourly-chart" height="80"></canvas>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="/dung-chung.js"></script>
+  <script src="/tong-quan.js"></script>
+</body>
+</html>

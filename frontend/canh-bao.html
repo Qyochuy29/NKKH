@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cảnh báo trực tiếp — SafeVoice AI</title>
+  <meta name="description" content="Theo dõi cảnh báo bạo lực học đường realtime">
+  <link rel="stylesheet" href="/giao-dien.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div id="app-shell"></div>
+    <main class="main-content">
+
+      <!-- Filters -->
+      <div class="filters-bar">
+        <select class="form-control" id="filter-type">
+          <option value="">Tất cả loại</option>
+          <option value="scream">🔴 La hét</option>
+          <option value="help">🟠 Kêu cứu</option>
+          <option value="threat">🟡 Đe dọa</option>
+          <option value="argument">🟤 Cãi vã</option>
+        </select>
+        <select class="form-control" id="filter-status">
+          <option value="">Tất cả trạng thái</option>
+          <option value="pending" selected>Chờ xử lý</option>
+          <option value="confirmed">Đã xác nhận</option>
+          <option value="false_alarm">Báo động giả</option>
+          <option value="resolved">Đã xử lý</option>
+        </select>
+        <input type="text" class="form-control" id="filter-area" placeholder="Tìm theo khu vực...">
+        <button class="btn btn-primary" onclick="loadAlerts()">🔍 Lọc</button>
+        <button class="btn btn-outline" onclick="clearFilters()">Xoá lọc</button>
+        <div style="flex-grow: 1;"></div>
+        <button class="btn btn-danger" onclick="document.getElementById('audio-upload').click()">🎙️ Tải âm thanh lên AI</button>
+        <input type="file" id="audio-upload" accept="audio/*" style="display:none" onchange="uploadAudio(event)">
+      </div>
+
+      <!-- Alert Cards -->
+      <div id="alerts-list"></div>
+
+      <div id="alerts-empty" class="empty-state" style="display:none;">
+        <div class="empty-icon">✅</div>
+        <h3>Không có cảnh báo nào</h3>
+        <p>Hệ thống đang hoạt động bình thường</p>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- AI Loading Overlay -->
+  <div id="ai-loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white;">
+    <div class="spinner" style="border: 4px solid #333; border-top: 4px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
+    <h3 style="margin-top: 20px;">🤖 AI Đang phân tích âm thanh...</h3>
+    <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+  </div>
+
+  <script src="/dung-chung.js"></script>
+  <script src="/canh-bao.js"></script>
+</body>
+</html>
