@@ -71,6 +71,30 @@ Hệ thống sẽ tự động:
 - **Giao diện đa thiết bị** hỗ trợ Dark mode và responsive trên mobile/tablet.
 - **Xuất CSV** dữ liệu lịch sử cảnh báo.
 
-## 🐍 AI Training (Tùy chọn)
+## 🧠 Khởi chạy Server AI Thực Tế (Tùy chọn)
 
-Vui lòng xem trong thư mục `huan-luyen-ai/` hoặc `ai-training/` để biết cách huấn luyện model AI phân loại âm thanh thực tế và tích hợp thay thế cho dịch vụ Simulator.
+Mặc định, backend sẽ dùng dữ liệu giả lập (Simulator). Để hệ thống nhận diện âm thanh thực tế thông qua mô hình AI, bạn cần chạy AI Server (Python):
+
+### Cách 1: Chạy bằng Docker (Khuyên dùng)
+1. Mở file `docker-compose.yml`
+2. Tìm khối cấu hình `ai-service` và xóa dấu `#` (uncomment)
+3. Chạy lại lệnh:
+   ```bash
+   docker-compose up --build -d
+   ```
+Hệ thống AI sẽ chạy ở cổng `5000` và kết nối trực tiếp với Backend.
+
+### Cách 2: Chạy thủ công (không dùng Docker)
+Nếu bạn muốn chạy server AI để tiện debug và test âm thanh:
+```bash
+# Di chuyển vào thư mục chứa server AI
+cd ai-training
+
+# Cài đặt các thư viện (yêu cầu Python 3.10+)
+pip install flask tensorflow tensorflow_hub librosa pydub SpeechRecognition
+
+# Khởi chạy server AI
+python server.py
+```
+
+*Lưu ý: Bạn cũng có thể vào thư mục `huan-luyen-ai/` để tham khảo mã nguồn tự huấn luyện mô hình âm thanh cá nhân.*
