@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   postgres:
@@ -31,39 +30,39 @@ services:
 
   backend:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend-csharp
+      dockerfile: Dockerfile
     container_name: sg-backend
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend:/app/frontend
+      - ./tai-lieu:/app/uploads
+      - dp_keys:/root/.aspnet/DataProtection-Keys
     environment:
-      DATABASE_URL: postgresql://sguser:sgpassword123@postgres:5432/school_guardian
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: school-guardian-jwt-secret-key-2024
-      JWT_REFRESH_SECRET: school-guardian-refresh-secret-key-2024
-      MOCK_AI_ENABLED: "true"
-      MOCK_AI_INTERVAL_MIN: "15000"
-      MOCK_AI_INTERVAL_MAX: "40000"
-      PORT: "3000"
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=school_guardian;Username=sguser;Password=sgpassword123;Port=5432"
+      Redis__ConnectionString: "redis:6379"
+      Jwt__Secret: "school-guardian-jwt-secret-key-2024"
+      Jwt__RefreshSecret: "school-guardian-refresh-secret-key-2024"
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_URLS: "http://+:3000"
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./frontend:/app/frontend
-      - ./tai-lieu:/app/uploads
 
-  ai-service:
-    build:
-      context: ./huan-luyen-ai
-    container_name: sg-ai
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./tai-lieu:/app/uploads
-    restart: unless-stopped
+#  ai-service:
+#    build:
+#      context: ./huan-luyen-ai
+#    container_name: sg-ai
+#    ports:
+#      - "5000:5000"
+#    volumes:
+#      - ./tai-lieu:/app/uploads
+#    restart: unless-stopped
 
 volumes:
   pg_data:
+  dp_keys:

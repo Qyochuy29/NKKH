@@ -5,7 +5,7 @@
   // If already logged in, redirect
   const user = getCurrentUser();
   if (user) {
-    window.location.href = '/tong-quan.html';
+    window.location.href = './tong-quan.html';
     return;
   }
 
@@ -41,7 +41,7 @@
       }
 
       setTokens(data.access_token, data.refresh_token);
-      window.location.href = '/tong-quan.html';
+      window.location.href = './tong-quan.html';
     } catch (err) {
       showError('Không thể kết nối tới máy chủ. Vui lòng thử lại.');
     } finally {

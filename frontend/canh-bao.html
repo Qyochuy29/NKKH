@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cảnh báo trực tiếp — SafeVoice AI</title>
   <meta name="description" content="Theo dõi cảnh báo bạo lực học đường realtime">
-  <link rel="stylesheet" href="/giao-dien.css">
+  <link rel="stylesheet" href="./giao-dien.css">
 </head>
 <body>
   <div class="app-layout">
@@ -22,8 +22,8 @@
           <option value="argument">🟤 Cãi vã</option>
         </select>
         <select class="form-control" id="filter-status">
-          <option value="">Tất cả trạng thái</option>
-          <option value="pending" selected>Chờ xử lý</option>
+          <option value="" selected>Tất cả trạng thái</option>
+          <option value="pending">Chờ xử lý</option>
           <option value="confirmed">Đã xác nhận</option>
           <option value="false_alarm">Báo động giả</option>
           <option value="resolved">Đã xử lý</option>
@@ -40,6 +40,7 @@
 
       <!-- Alert Cards -->
       <div id="alerts-list"></div>
+      <div id="pagination-alerts"></div>
 
       <div id="alerts-empty" class="empty-state" style="display:none;">
         <div class="empty-icon">✅</div>
@@ -51,13 +52,14 @@
   </div>
 
   <!-- AI Loading Overlay -->
-  <div id="ai-loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white;">
-    <div class="spinner" style="border: 4px solid #333; border-top: 4px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
-    <h3 style="margin-top: 20px;">🤖 AI Đang phân tích âm thanh...</h3>
+  <div id="ai-loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white;">
+    <div class="spinner" style="border: 4px solid #333; border-top: 4px solid #3498db; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite;"></div>
+    <h3 style="margin-top: 24px; font-size: 1.3rem;">🤖 AI đang rà soát file âm thanh...</h3>
+    <p style="color: rgba(255,255,255,0.7); margin-top: 8px;">Quá trình này có thể tốn 20-40 giây. Vui lòng đợi.</p>
     <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
   </div>
 
-  <script src="/dung-chung.js"></script>
-  <script src="/canh-bao.js"></script>
+  <script src="./dung-chung.js?v=7"></script>
+  <script src="./canh-bao.js?v=7"></script>
 </body>
 </html>

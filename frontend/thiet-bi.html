@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản lý thiết bị — SafeVoice AI</title>
-  <link rel="stylesheet" href="/giao-dien.css">
+  <link rel="stylesheet" href="./giao-dien.css">
 </head>
 <body>
   <div class="app-layout">
@@ -34,6 +34,7 @@
               <tbody id="devices-tbody"></tbody>
             </table>
           </div>
+          <div id="pagination-devices"></div>
         </div>
       </div>
 
@@ -66,20 +67,6 @@
                 </select>
               </div>
             </div>
-            <div class="form-group">
-              <label>Vị trí trên sơ đồ (click vào bản đồ bên dưới)</label>
-              <div class="school-map-container" style="cursor:crosshair;">
-                <svg viewBox="0 0 400 250" id="position-svg">
-                  <rect x="5" y="5" width="390" height="240" rx="4" fill="var(--bg-hover)" stroke="var(--border)"/>
-                  <text x="200" y="130" text-anchor="middle" fill="var(--text-muted)" font-size="12">Click để chọn vị trí</text>
-                  <circle id="position-dot" cx="0" cy="0" r="6" fill="var(--primary)" style="display:none"/>
-                </svg>
-              </div>
-              <div class="form-row" style="margin-top:8px;">
-                <div class="form-group"><label>X (%)</label><input type="number" class="form-control" id="device-x" min="0" max="100" step="0.1"></div>
-                <div class="form-group"><label>Y (%)</label><input type="number" class="form-control" id="device-y" min="0" max="100" step="0.1"></div>
-              </div>
-            </div>
           </div>
           <div class="modal-footer">
             <button class="btn btn-outline" onclick="closeDeviceModal()">Huỷ</button>
@@ -91,7 +78,7 @@
     </main>
   </div>
 
-  <script src="/dung-chung.js"></script>
-  <script src="/thiet-bi.js"></script>
+  <script src="./dung-chung.js?v=2"></script>
+  <script src="./thiet-bi.js"></script>
 </body>
 </html>

@@ -5,8 +5,11 @@
 
   window.loadAlerts = loadAlerts;
   window.clearFilters = clearFilters;
-  window.handleAlert = handleAlert;
   window.uploadAudio = uploadAudio;
+
+  let allAlerts = [];
+  let currentPage = 1;
+  const itemsPerPage = 10;
 
   loadAreaFilter();
   loadAlerts();
@@ -28,7 +31,8 @@
     const file = event.target.files[0];
     if (!file) return;
 
-    document.getElementById('ai-loading-overlay').style.display = 'flex';
+    const overlay = document.getElementById('ai-loading-overlay');
+    overlay.style.display = 'flex';
 
     const formData = new FormData();
     formData.append('audio', file);
@@ -40,18 +44,28 @@
         body: formData
       });
 
-      if (!res.ok) throw new Error('Upload failed');
+      overlay.style.display = 'none';
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || `HTTP ${res.status}`);
+      }
       
-      const newAlert = await res.json();
-      document.getElementById('ai-loading-overlay').style.display = 'none';
-      showToast('Phân tích hoàn tất', 'AI đã phân tích xong file âm thanh', 'success');
-      
-      // newAlert will come via websocket anyway, but we can also just let it be.
-      // Reset input
+      const data = await res.json();
+      const count = data.totalAlerts ?? 0;
+
+      if (count > 0) {
+        showToast('🚨 Phân tích hoàn tất', `Tìm thấy ${count} cảnh báo trong file âm thanh!`, 'danger');
+        // Reload danh sách để hiện các cảnh báo mới
+        await loadAlerts();
+      } else {
+        showToast('✅ Phân tích hoàn tất', 'Không phát hiện dấu hiệu bạo lực trong file âm thanh.', 'success');
+      }
+
       event.target.value = '';
     } catch (err) {
-      document.getElementById('ai-loading-overlay').style.display = 'none';
-      showToast('Lỗi', 'Không thể phân tích âm thanh: ' + err.message, 'danger');
+      overlay.style.display = 'none';
+      showToast('❌ Lỗi phân tích', err.message, 'danger');
       event.target.value = '';
     }
   }
@@ -73,27 +87,43 @@
     const status = document.getElementById('filter-status').value;
     const area = document.getElementById('filter-area').value;
 
-    let url = '/api/alerts?limit=50';
+    let url = '/api/alerts?limit=1000';
     if (type) url += `&sound_type=${type}`;
     if (status) url += `&status=${status}`;
     if (area) url += `&area=${encodeURIComponent(area)}`;
 
     try {
       const result = await api('GET', url);
-      const list = document.getElementById('alerts-list');
-      const empty = document.getElementById('alerts-empty');
-
-      if (result.data.length === 0) {
-        list.innerHTML = '';
-        empty.style.display = 'block';
-        return;
-      }
-
-      empty.style.display = 'none';
-      list.innerHTML = result.data.map(a => renderAlertCard(a)).join('');
+      allAlerts = result.data || [];
+      currentPage = 1;
+      renderAlerts();
     } catch (err) {
       showToast('Lỗi', 'Không thể tải cảnh báo: ' + err.message, 'danger');
     }
+  }
+
+  function renderAlerts() {
+    const list = document.getElementById('alerts-list');
+    const empty = document.getElementById('alerts-empty');
+
+    if (allAlerts.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = 'block';
+      document.getElementById('pagination-alerts').innerHTML = '';
+      return;
+    }
+
+    empty.style.display = 'none';
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pagedAlerts = allAlerts.slice(start, end);
+
+    list.innerHTML = pagedAlerts.map(a => renderAlertCard(a)).join('');
+
+    renderPagination(allAlerts.length, itemsPerPage, currentPage, 'pagination-alerts', (page) => {
+      currentPage = page;
+      renderAlerts();
+    });
   }
 
   function clearFilters() {
@@ -106,9 +136,8 @@
   function renderAlertCard(a) {
     const type = SOUND_TYPE_LABELS[a.sound_type] || { icon: '❓', label: a.sound_type, color: 'info' };
     const status = STATUS_LABELS[a.status] || { label: a.status, class: 'badge-muted' };
-    const canHandle = a.status === 'pending';
     const audioHtml = a.audio_file_url
-      ? `<audio controls preload="none" style="height:32px;"><source src="${a.audio_file_url}" type="audio/mpeg">Trình duyệt không hỗ trợ</audio>`
+      ? `<audio controls preload="none" style="height:32px;"><source src="${a.audio_file_url}">Trình duyệt không hỗ trợ</audio>`
       : '';
 
     return `
@@ -133,31 +162,10 @@
               ${a.notes}
             </div>
           ` : ''}
-          ${canHandle ? `
-            <div class="alert-card-actions">
-              <button class="btn btn-danger btn-sm" onclick="handleAlert('${a.id}','confirmed')">✅ Xác nhận sự cố</button>
-              <button class="btn btn-outline btn-sm" onclick="handleAlert('${a.id}','false_alarm')">❌ Báo động giả</button>
-              <button class="btn btn-warning btn-sm" onclick="handleAlert('${a.id}','resolved')">📤 Chuyển BGH</button>
-            </div>
-          ` : `
-            ${a.notes && !a.notes.includes('🗣') ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">📝 ${a.notes}</div>` : ''}
-          `}
+          ${a.notes && !a.notes.includes('🗣') ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">📝 ${a.notes}</div>` : ''}
         </div>
       </div>
     `;
-  }
-
-  async function handleAlert(id, status) {
-    const notes = status === 'confirmed' ? 'Xác nhận có xảy ra sự cố' :
-                  status === 'false_alarm' ? 'Đánh dấu là báo động giả' :
-                  'Chuyển ban giám hiệu xử lý';
-    try {
-      await api('PATCH', `/api/alerts/${id}`, { status, notes });
-      showToast('Thành công', 'Đã cập nhật trạng thái cảnh báo', 'success');
-      loadAlerts();
-    } catch (err) {
-      showToast('Lỗi', 'Không thể cập nhật: ' + err.message, 'danger');
-    }
   }
 
   function prependAlertCard(alert) {

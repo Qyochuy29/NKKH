@@ -378,10 +378,10 @@ a:hover { color: var(--primary-dark); }
   border-radius: var(--radius) var(--radius) 0 0;
 }
 
-.kpi-card.blue::before { background: linear-gradient(90deg, var(--primary), #6366f1); }
-.kpi-card.red::before { background: linear-gradient(90deg, var(--danger), #f97316); }
-.kpi-card.green::before { background: linear-gradient(90deg, var(--success), #34d399); }
-.kpi-card.yellow::before { background: linear-gradient(90deg, var(--caution), #f59e0b); }
+.kpi-card.blue::before { background: #9ca3af; }
+.kpi-card.red::before { background: #9ca3af; }
+.kpi-card.green::before { background: #9ca3af; }
+.kpi-card.yellow::before { background: #9ca3af; }
 
 .kpi-header {
   display: flex;

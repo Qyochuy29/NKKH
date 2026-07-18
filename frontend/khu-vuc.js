@@ -19,38 +19,56 @@
 
   let pendingDeleteId = null;
 
+  let allAreas = [];
+  let currentPage = 1;
+  const itemsPerPage = 10;
+
   loadAreas();
 
   async function loadAreas() {
     try {
-      const areas = await api('GET', '/api/areas');
-      const tbody = document.getElementById('areas-tbody');
-      if (areas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">Chưa có khu vực nào</td></tr>`;
-        return;
-      }
-      tbody.innerHTML = areas.map((a, idx) => `
-        <tr>
-          <td style="color:var(--text-muted);font-size:13px;">${idx + 1}</td>
-          <td><strong>${a.name}</strong></td>
-          <td style="color:var(--text-secondary);font-size:13px;">${a.description || '<em style="color:var(--text-muted)">—</em>'}</td>
-          <td>
-            <span class="badge ${a.device_count > 0 ? 'badge-online' : 'badge-muted'}">
-              🎙️ ${a.device_count} thiết bị
-            </span>
-          </td>
-          <td style="font-size:13px;color:var(--text-muted);">${formatDate(a.created_at)}</td>
-          <td style="display:flex;gap:6px;justify-content:flex-end;">
-            ${user.role === 'admin' ? `
-              <button class="btn btn-outline btn-sm" onclick='editArea(${JSON.stringify(a).replace(/'/g, "\\'")})'>✏️ Sửa</button>
-              <button class="btn btn-sm" style="background:var(--danger);color:#fff;" onclick="deleteArea('${a.id}','${a.name.replace(/'/g, "\\'")}',${a.device_count})">🗑️ Xoá</button>
-            ` : ''}
-          </td>
-        </tr>
-      `).join('');
+      allAreas = await api('GET', '/api/areas');
+      renderAreas();
     } catch (err) {
       showToast('Lỗi', err.message, 'danger');
     }
+  }
+
+  function renderAreas() {
+    const tbody = document.getElementById('areas-tbody');
+    if (allAreas.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">Chưa có khu vực nào</td></tr>`;
+      return;
+    }
+
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pagedAreas = allAreas.slice(start, end);
+
+    tbody.innerHTML = pagedAreas.map((a, idx) => `
+      <tr>
+        <td style="color:var(--text-muted);font-size:13px;">${start + idx + 1}</td>
+        <td><strong>${a.name}</strong></td>
+        <td style="color:var(--text-secondary);font-size:13px;">${a.description || '<em style="color:var(--text-muted)">—</em>'}</td>
+        <td>
+          <span class="badge ${a.device_count > 0 ? 'badge-online' : 'badge-muted'}">
+            🎙️ ${a.device_count} thiết bị
+          </span>
+        </td>
+        <td style="font-size:13px;color:var(--text-muted);">${formatDate(a.created_at)}</td>
+        <td style="display:flex;gap:6px;justify-content:flex-end;">
+          ${user.role === 'admin' ? `
+            <button class="btn btn-outline btn-sm" onclick='editArea(${JSON.stringify(a).replace(/'/g, "\\'")})'>✏️ Sửa</button>
+            <button class="btn btn-sm" style="background:var(--danger);color:#fff;" onclick="deleteArea('${a.id}','${a.name.replace(/'/g, "\\'")}',${a.device_count})">🗑️ Xoá</button>
+          ` : ''}
+        </td>
+      </tr>
+    `).join('');
+
+    renderPagination(allAreas.length, itemsPerPage, currentPage, 'pagination-areas', (page) => {
+      currentPage = page;
+      renderAreas();
+    });
   }
 
   function showAddAreaModal() {

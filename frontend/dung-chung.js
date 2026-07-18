@@ -119,10 +119,9 @@ let socket = null;
 let wsCallbacks = [];
 
 function setupWebSocket() {
-  // Load Socket.IO client
-  if (typeof io === 'undefined') {
+  if (typeof signalR === 'undefined') {
     const script = document.createElement('script');
-    script.src = 'https://cdn.socket.io/4.7.4/socket.io.min.js';
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js';
     script.onload = () => connectWebSocket();
     document.head.appendChild(script);
   } else {
@@ -130,15 +129,17 @@ function setupWebSocket() {
   }
 }
 
-function connectWebSocket() {
+async function connectWebSocket() {
   try {
-    socket = io(`${API_BASE}/ws/alerts`, {
-      transports: ['websocket', 'polling'],
-    });
+    const token = getToken();
+    if (!token) return;
 
-    socket.on('connect', () => {
-      console.log('🔌 WebSocket connected');
-    });
+    socket = new signalR.HubConnectionBuilder()
+      .withUrl(`${API_BASE}/ws/alerts`, {
+         accessTokenFactory: () => token
+      })
+      .withAutomaticReconnect()
+      .build();
 
     socket.on('new-alert', (alert) => {
       console.log('🚨 New alert:', alert);
@@ -157,9 +158,8 @@ function connectWebSocket() {
       });
     });
 
-    socket.on('disconnect', () => {
-      console.log('🔌 WebSocket disconnected');
-    });
+    await socket.start();
+    console.log('🔌 WebSocket (SignalR) connected');
   } catch (err) {
     console.error('WebSocket connection failed:', err);
     setTimeout(connectWebSocket, 5000);
@@ -202,12 +202,13 @@ function showAlertToast(alert) {
   };
 
   const severity = alert.confidence_score >= 85 ? 'danger' : alert.confidence_score >= 70 ? 'warning' : 'info';
-  const area = alert.device?.area || 'Không xác định';
+  const area = alert.device?.area?.name || alert.device?.area || 'Không xác định';
   const label = typeLabels[alert.sound_type] || alert.sound_type;
 
   showToast(
     `${label}`,
-    `Khu vực: ${area} — Độ tin cậy: ${alert.confidence_score.toFixed(0)}%`,
+    `Khu vực: ${area} — Độ tin cậy: ${alert.confidence_score.toFixed(0)}%<br/><br/>
+    <small style="font-style:italic;color:#666;">${alert.notes ? alert.notes : ''}</small>`,
     severity
   );
 }
@@ -279,9 +280,12 @@ function renderAppShell(activePageId) {
     { id: 'dashboard', icon: '📊', label: 'Tổng quan', href: '/tong-quan.html' },
     { id: 'alerts', icon: '🚨', label: 'Cảnh báo trực tiếp', href: '/canh-bao.html', badge: true },
     { id: 'history', icon: '📋', label: 'Lịch sử cảnh báo', href: '/lich-su.html' },
-    { id: 'statistics', icon: '📈', label: 'Thống kê', href: '/thong-ke.html' },
-    { id: 'devices', icon: '🎙️', label: 'Thiết bị', href: '/thiet-bi.html' },
+    { id: 'statistics', icon: '📈', label: 'Thống kê', href: '/thong-ke.html' }
   ];
+
+  if (user.role !== 'phu_huynh') {
+    navItems.push({ id: 'devices', icon: '🎙️', label: 'Thiết bị', href: '/thiet-bi.html' });
+  }
 
   if (user.role === 'admin') {
     navItems.push({ id: 'users', icon: '👥', label: 'Người dùng', href: '/nguoi-dung.html' });
@@ -293,6 +297,7 @@ function renderAppShell(activePageId) {
   const pageTitles = {
     dashboard: 'Tổng quan',
     alerts: 'Cảnh báo trực tiếp',
+    analyze: 'Cắt âm thanh AI',
     history: 'Lịch sử cảnh báo',
     statistics: 'Thống kê',
     devices: 'Quản lý thiết bị',
@@ -327,7 +332,7 @@ function renderAppShell(activePageId) {
         </div>
         <div class="nav-section">
           <div class="nav-section-title">Quản lý</div>
-          ${navItems.slice(4).map(item => `
+          ${navItems.slice(5).map(item => `
             <a href="${item.href}" class="nav-item ${activePageId === item.id ? 'active' : ''}">
               <span class="nav-icon">${item.icon}</span>
               <span>${item.label}</span>
@@ -436,6 +441,47 @@ function getConfidenceColor(confidence) {
   if (confidence >= 70) return 'var(--warning)';
   return 'var(--caution)';
 }
+
+/* ========== PAGINATION ========== */
+window.renderPagination = function(totalItems, itemsPerPage, currentPage, containerId, onPageChange) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  if (totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+
+  let html = '<div class="pagination" style="display:flex; justify-content:center; gap:8px; margin-top:20px;">';
+  
+  // Prev button
+  html += `<button class="btn btn-sm ${currentPage === 1 ? 'disabled' : 'btn-outline'}" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">Trước</button>`;
+
+  // Page numbers
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      html += `<button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline'}" data-page="${i}">${i}</button>`;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      html += `<span style="padding: 4px 8px; color: var(--text-muted);">...</span>`;
+    }
+  }
+
+  // Next button
+  html += `<button class="btn btn-sm ${currentPage === totalPages ? 'disabled' : 'btn-outline'}" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">Sau</button>`;
+  
+  html += '</div>';
+  container.innerHTML = html;
+
+  container.querySelectorAll('button[data-page]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const page = parseInt(e.target.dataset.page);
+      if (!isNaN(page) && page !== currentPage) {
+        onPageChange(page);
+      }
+    });
+  });
+};
 
 /* ========== PAGE INIT ========== */
 function initPage(pageId) {

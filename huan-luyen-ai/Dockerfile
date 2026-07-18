@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y libsndfile1 && rm -rf /var/lib/apt/list
 COPY requirements.txt .
 
 # Cài đặt requirements
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --default-timeout=1000 -r requirements.txt
 
 COPY . .
 

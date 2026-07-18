@@ -1,0 +1,26 @@
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS builder
+
+WORKDIR /app
+
+COPY backend-csharp/*.csproj ./
+RUN dotnet restore
+
+COPY backend-csharp/ ./
+RUN dotnet publish -c Release -o /app/out
+
+# Production stage - smaller runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
+
+WORKDIR /app
+COPY --from=builder /app/out ./
+
+# Copy frontend to be served statically (same as NestJS did)
+COPY frontend/ ./wwwroot/
+
+EXPOSE 3000
+
+ENV ASPNETCORE_URLS=http://+:3000
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+ENTRYPOINT ["dotnet", "SchoolGuardian.Api.dll"]

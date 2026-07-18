@@ -10,19 +10,9 @@
 
   loadDevices();
 
-  // SVG click to pick position
-  document.getElementById('position-svg').addEventListener('click', (e) => {
-    const svg = e.currentTarget;
-    const rect = svg.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    document.getElementById('device-x').value = x.toFixed(1);
-    document.getElementById('device-y').value = y.toFixed(1);
-    const dot = document.getElementById('position-dot');
-    dot.setAttribute('cx', (x / 100) * 400);
-    dot.setAttribute('cy', (y / 100) * 250);
-    dot.style.display = 'block';
-  });
+  let allDevices = [];
+  let currentPage = 1;
+  const itemsPerPage = 10;
 
   async function loadAreas() {
     try {
@@ -47,34 +37,47 @@
 
   async function loadDevices() {
     try {
-      const devices = await api('GET', '/api/devices');
-      const tbody = document.getElementById('devices-tbody');
-      tbody.innerHTML = devices.map(d => {
-        const areaName = d.area?.name || d.area || '—';
-        const statusBadge = d.status === 'online' ? 'badge-online' :
-                           d.status === 'error' ? 'badge-error' : 'badge-offline';
-        const statusLabel = d.status === 'online' ? 'Hoạt động' :
-                           d.status === 'error' ? 'Lỗi' : 'Ngoại tuyến';
-        const batteryColor = d.battery_level > 50 ? 'var(--success)' :
-                            d.battery_level > 20 ? 'var(--warning)' : 'var(--danger)';
-        return `
-          <tr>
-            <td><strong>${d.name}</strong></td>
-            <td>${areaName}</td>
-            <td>Tầng ${d.floor}</td>
-            <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
-            <td>
-              <span style="color:${batteryColor};font-weight:600;">${d.battery_level}%</span>
-              <span class="confidence-bar" style="width:50px;"><span class="confidence-bar-fill" style="width:${d.battery_level}%;background:${batteryColor}"></span></span>
-            </td>
-            <td>${formatRelative(d.last_seen)}</td>
-            <td><button class="btn btn-outline btn-sm" onclick='editDevice(${JSON.stringify(d).replace(/'/g, "\\'")})'>✏️ Sửa</button></td>
-          </tr>
-        `;
-      }).join('');
+      allDevices = await api('GET', '/api/devices');
+      renderDevices();
     } catch (err) {
       showToast('Lỗi', err.message, 'danger');
     }
+  }
+
+  function renderDevices() {
+    const tbody = document.getElementById('devices-tbody');
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const pagedDevices = allDevices.slice(start, end);
+
+    tbody.innerHTML = pagedDevices.map(d => {
+      const areaName = d.area?.name || d.area || '—';
+      const statusBadge = d.status === 'online' ? 'badge-online' :
+                         d.status === 'error' ? 'badge-error' : 'badge-offline';
+      const statusLabel = d.status === 'online' ? 'Hoạt động' :
+                         d.status === 'error' ? 'Lỗi' : 'Ngoại tuyến';
+      const batteryColor = d.battery_level > 50 ? 'var(--success)' :
+                          d.battery_level > 20 ? 'var(--warning)' : 'var(--danger)';
+      return `
+        <tr>
+          <td><strong>${d.name}</strong></td>
+          <td>${areaName}</td>
+          <td>Tầng ${d.floor}</td>
+          <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
+          <td>
+            <span style="color:${batteryColor};font-weight:600;">${d.battery_level}%</span>
+            <span class="confidence-bar" style="width:50px;"><span class="confidence-bar-fill" style="width:${d.battery_level}%;background:${batteryColor}"></span></span>
+          </td>
+          <td>${formatRelative(d.last_seen)}</td>
+          <td><button class="btn btn-outline btn-sm" onclick='editDevice(${JSON.stringify(d).replace(/'/g, "\\'")})'>✏️ Sửa</button></td>
+        </tr>
+      `;
+    }).join('');
+
+    renderPagination(allDevices.length, itemsPerPage, currentPage, 'pagination-devices', (page) => {
+      currentPage = page;
+      renderDevices();
+    });
   }
 
   async function showAddModal() {
@@ -82,9 +85,6 @@
     document.getElementById('device-id').value = '';
     document.getElementById('device-name').value = '';
     document.getElementById('device-floor').value = '1';
-    document.getElementById('device-x').value = '';
-    document.getElementById('device-y').value = '';
-    document.getElementById('position-dot').style.display = 'none';
     await loadAreas();
     document.getElementById('device-area').value = '';
     document.getElementById('device-modal').classList.add('active');
@@ -95,12 +95,6 @@
     document.getElementById('device-id').value = d.id;
     document.getElementById('device-name').value = d.name;
     document.getElementById('device-floor').value = d.floor;
-    document.getElementById('device-x').value = d.position_x.toFixed(1);
-    document.getElementById('device-y').value = d.position_y.toFixed(1);
-    const dot = document.getElementById('position-dot');
-    dot.setAttribute('cx', (d.position_x / 100) * 400);
-    dot.setAttribute('cy', (d.position_y / 100) * 250);
-    dot.style.display = 'block';
     await loadAreas();
     // Set area value: d.area_id or d.area.id
     const areaId = d.area_id || d.area?.id || '';
@@ -119,8 +113,8 @@
       name: document.getElementById('device-name').value.trim(),
       area_id,
       floor: parseInt(document.getElementById('device-floor').value),
-      position_x: parseFloat(document.getElementById('device-x').value) || 50,
-      position_y: parseFloat(document.getElementById('device-y').value) || 50,
+      position_x: 0,
+      position_y: 0,
     };
 
     if (!data.name || !data.area_id) {

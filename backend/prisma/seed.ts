@@ -4,12 +4,7 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  // Check if already seeded
-  const existingUsers = await prisma.user.count();
-  if (existingUsers > 0) {
-    console.log('Database already seeded, skipping...');
-    return;
-  }
+  // Check removed to force seed
 
   console.log('🌱 Seeding database...');
 
@@ -56,27 +51,29 @@ async function main() {
   // --- Areas ---
   const areaNames = [
     'Sân trường',
-    'Cổng trường',
-    'Nhà xe',
+    'Cổng trường chính',
+    'Khu vực tập thể dục',
     'Canteen',
     'Hành lang T1',
-    'Phòng học T1',
+    'Lớp 1A1',
+    'Lớp 1A2',
     'Nhà vệ sinh T1',
     'Phòng bảo vệ',
     'Hành lang T2',
-    'Phòng học T2',
+    'Lớp 2A1',
+    'Lớp 2A2',
     'Nhà vệ sinh T2',
-    'Phòng GV',
+    'Phòng giáo viên',
     'Thư viện',
-    'Phòng TN',
+    'Phòng y tế',
     'Cầu thang',
     'Hành lang T3',
-    'Phòng học T3',
+    'Lớp 3A1',
+    'Lớp 4A1',
+    'Lớp 5A1',
     'Nhà vệ sinh T3',
-    'Sân thượng',
     'Phòng tin học',
-    'Phòng nhạc',
-    'Phòng họp',
+    'Phòng âm nhạc',
   ];
 
   const areaRecords = await Promise.all(
@@ -89,53 +86,33 @@ async function main() {
   // --- Devices ---
   const deviceList = [
     // Floor 1
-    { name: 'Sân trường chính', area: 'Sân trường', floor: 1 },
-    { name: 'Cổng trường', area: 'Cổng trường', floor: 1 },
-    { name: 'Nhà xe học sinh', area: 'Nhà xe', floor: 1 },
-    { name: 'Canteen A', area: 'Canteen', floor: 1 },
-    { name: 'Canteen B', area: 'Canteen', floor: 1 },
+    { name: 'Khu vực Sân trường', area: 'Sân trường', floor: 1 },
+    { name: 'Cổng trường chính', area: 'Cổng trường chính', floor: 1 },
+    { name: 'Sân tập thể dục', area: 'Khu vực tập thể dục', floor: 1 },
+    { name: 'Canteen', area: 'Canteen', floor: 1 },
     { name: 'Hành lang tầng 1 - A', area: 'Hành lang T1', floor: 1 },
-    { name: 'Hành lang tầng 1 - B', area: 'Hành lang T1', floor: 1 },
-    { name: 'Phòng học 101', area: 'Phòng học T1', floor: 1 },
-    { name: 'Phòng học 102', area: 'Phòng học T1', floor: 1 },
-    { name: 'Phòng học 103', area: 'Phòng học T1', floor: 1 },
-    { name: 'Phòng học 104', area: 'Phòng học T1', floor: 1 },
-    { name: 'Phòng học 105', area: 'Phòng học T1', floor: 1 },
-    { name: 'Nhà vệ sinh T1 Nam', area: 'Nhà vệ sinh T1', floor: 1 },
-    { name: 'Nhà vệ sinh T1 Nữ', area: 'Nhà vệ sinh T1', floor: 1 },
+    { name: 'Lớp 1A1', area: 'Lớp 1A1', floor: 1 },
+    { name: 'Lớp 1A2', area: 'Lớp 1A2', floor: 1 },
+    { name: 'Nhà vệ sinh T1', area: 'Nhà vệ sinh T1', floor: 1 },
     { name: 'Phòng bảo vệ', area: 'Phòng bảo vệ', floor: 1 },
+    { name: 'Phòng y tế', area: 'Phòng y tế', floor: 1 },
     // Floor 2
     { name: 'Hành lang tầng 2 - A', area: 'Hành lang T2', floor: 2 },
-    { name: 'Hành lang tầng 2 - B', area: 'Hành lang T2', floor: 2 },
-    { name: 'Phòng học 201', area: 'Phòng học T2', floor: 2 },
-    { name: 'Phòng học 202', area: 'Phòng học T2', floor: 2 },
-    { name: 'Phòng học 203', area: 'Phòng học T2', floor: 2 },
-    { name: 'Phòng học 204', area: 'Phòng học T2', floor: 2 },
-    { name: 'Phòng học 205', area: 'Phòng học T2', floor: 2 },
-    { name: 'Phòng học 206', area: 'Phòng học T2', floor: 2 },
-    { name: 'Phòng thí nghiệm', area: 'Phòng TN', floor: 2 },
-    { name: 'Thư viện', area: 'Thư viện', floor: 2 },
-    { name: 'Nhà vệ sinh T2 Nam', area: 'Nhà vệ sinh T2', floor: 2 },
-    { name: 'Nhà vệ sinh T2 Nữ', area: 'Nhà vệ sinh T2', floor: 2 },
-    { name: 'Phòng giáo viên', area: 'Phòng GV', floor: 2 },
-    { name: 'Cầu thang T2-A', area: 'Cầu thang', floor: 2 },
-    { name: 'Cầu thang T2-B', area: 'Cầu thang', floor: 2 },
+    { name: 'Lớp 2A1', area: 'Lớp 2A1', floor: 2 },
+    { name: 'Lớp 2A2', area: 'Lớp 2A2', floor: 2 },
+    { name: 'Thư viện trường', area: 'Thư viện', floor: 2 },
+    { name: 'Nhà vệ sinh T2', area: 'Nhà vệ sinh T2', floor: 2 },
+    { name: 'Phòng giáo viên', area: 'Phòng giáo viên', floor: 2 },
+    { name: 'Cầu thang T2', area: 'Cầu thang', floor: 2 },
     // Floor 3
     { name: 'Hành lang tầng 3 - A', area: 'Hành lang T3', floor: 3 },
-    { name: 'Hành lang tầng 3 - B', area: 'Hành lang T3', floor: 3 },
-    { name: 'Phòng học 301', area: 'Phòng học T3', floor: 3 },
-    { name: 'Phòng học 302', area: 'Phòng học T3', floor: 3 },
-    { name: 'Phòng học 303', area: 'Phòng học T3', floor: 3 },
-    { name: 'Phòng học 304', area: 'Phòng học T3', floor: 3 },
-    { name: 'Phòng học 305', area: 'Phòng học T3', floor: 3 },
+    { name: 'Lớp 3A1', area: 'Lớp 3A1', floor: 3 },
+    { name: 'Lớp 4A1', area: 'Lớp 4A1', floor: 3 },
+    { name: 'Lớp 5A1', area: 'Lớp 5A1', floor: 3 },
     { name: 'Phòng tin học', area: 'Phòng tin học', floor: 3 },
-    { name: 'Phòng nhạc', area: 'Phòng nhạc', floor: 3 },
-    { name: 'Nhà vệ sinh T3 Nam', area: 'Nhà vệ sinh T3', floor: 3 },
-    { name: 'Nhà vệ sinh T3 Nữ', area: 'Nhà vệ sinh T3', floor: 3 },
-    { name: 'Sân thượng', area: 'Sân thượng', floor: 3 },
-    { name: 'Cầu thang T3-A', area: 'Cầu thang', floor: 3 },
-    { name: 'Cầu thang T3-B', area: 'Cầu thang', floor: 3 },
-    { name: 'Phòng họp lớn', area: 'Phòng họp', floor: 3 },
+    { name: 'Phòng âm nhạc', area: 'Phòng âm nhạc', floor: 3 },
+    { name: 'Nhà vệ sinh T3', area: 'Nhà vệ sinh T3', floor: 3 },
+    { name: 'Cầu thang T3', area: 'Cầu thang', floor: 3 },
   ];
 
   const devices: any[] = [];
@@ -218,6 +195,7 @@ async function main() {
       { key: 'monitor_threat', value: 'true' },
       { key: 'monitor_argument', value: 'true' },
       { key: 'audio_retention_days', value: '30' },
+      { key: 'simulator_enabled', value: 'true' },
     ],
   });
 
@@ -228,22 +206,22 @@ async function main() {
 function getRandomNote(status: AlertStatus): string {
   const notes: Record<string, string[]> = {
     confirmed: [
-      'Xác nhận có xảy ra xô xát giữa hai học sinh lớp 9.',
-      'Phát hiện nhóm học sinh đang ẩu đả tại khu vực sân trường.',
-      'Đã xác nhận sự việc, đã thông báo ban giám hiệu.',
-      'Học sinh bị bắt nạt, đã can thiệp kịp thời.',
+      'Xác nhận có học sinh cãi nhau lớn tiếng do mâu thuẫn lúc xếp hàng.',
+      'Phát hiện học sinh lớp 1 chạy nhảy bị ngã trầy xước ở sân trường.',
+      'Giám thị báo cáo có nhóm học sinh lớp 5 đuổi đánh nhau ở hành lang.',
+      'Phát hiện tiếng to tiếng nghi là phụ huynh phàn nàn ở phòng bảo vệ.',
     ],
     false_alarm: [
-      'Âm thanh từ hoạt động thể dục buổi sáng.',
-      'Tiếng ồn từ lớp học nhạc.',
-      'Học sinh đùa giỡn bình thường.',
-      'Âm thanh từ sân thể dục.',
+      'Tiếng ồn reo hò trong tiết học thể dục ngoài sân.',
+      'Học sinh nô đùa, hò hét bình thường trong giờ ra chơi.',
+      'Âm thanh tập hát đồng thanh của lớp 3A1.',
+      'Tiếng la hét vui vẻ khi chơi đuổi bắt ở sân trường.',
     ],
     resolved: [
-      'Đã xử lý xong, báo cáo ban giám hiệu.',
-      'Đã mời phụ huynh làm việc.',
-      'Tình huống đã được giải quyết ổn thỏa.',
-      'Đã lập biên bản và thông báo giáo viên chủ nhiệm.',
+      'Giáo viên chủ nhiệm đã can thiệp, yêu cầu các em xin lỗi nhau.',
+      'Đã đưa học sinh xuống phòng y tế băng bó vết thương nhẹ.',
+      'Đã nhắc nhở các em đi đứng cẩn thận không chạy nhảy trên hành lang.',
+      'Đã mời phụ huynh vào phòng tiếp khách để giải thích rõ ràng.',
     ],
   };
 

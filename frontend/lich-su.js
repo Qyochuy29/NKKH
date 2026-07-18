@@ -16,6 +16,16 @@
   loadAreaFilter();
   loadHistory();
 
+  // WebSocket: live updates for History
+  onWsEvent('new-alert', (alert) => {
+    // Reload history to ensure proper sorting/pagination
+    loadHistory();
+  });
+
+  onWsEvent('alert-updated', (alert) => {
+    loadHistory();
+  });
+
   async function loadAreaFilter() {
     try {
       const areas = await api('GET', '/api/areas');
@@ -47,7 +57,8 @@
       const result = await api('GET', url);
       currentData = result.data;
       renderTable(result.data);
-      renderPagination(result.total);
+      const currentPage = Math.floor(currentOffset / pageSize) + 1;
+      window.renderPagination(result.total, pageSize, currentPage, 'pagination', goPage);
     } catch (err) {
       showToast('Lỗi', err.message, 'danger');
     }
@@ -74,24 +85,16 @@
           </td>
           <td><span class="badge ${status.class}">${status.label}</span></td>
           <td>${a.handled_by?.full_name || '—'}</td>
+          <td onclick="event.stopPropagation()">
+            ${a.audio_file_url ? `<audio controls style="height:32px; width:160px;" preload="none"><source src="${a.audio_file_url}"></audio>` : '<span style="color:#aaa;font-size:12px;">Không có</span>'}
+          </td>
           <td><button class="btn btn-outline btn-sm btn-icon" title="Chi tiết">📄</button></td>
         </tr>
       `;
     }).join('');
   }
 
-  function renderPagination(total) {
-    const pages = Math.ceil(total / pageSize);
-    const current = Math.floor(currentOffset / pageSize) + 1;
-    const pg = document.getElementById('pagination');
 
-    if (pages <= 1) { pg.innerHTML = ''; return; }
-
-    let html = `<span class="pagination-info">Trang ${current}/${pages} (${total} kết quả)</span>`;
-    html += `<button class="btn btn-outline btn-sm" onclick="goPage(${current - 1})" ${current <= 1 ? 'disabled' : ''}>← Trước</button>`;
-    html += `<button class="btn btn-outline btn-sm" onclick="goPage(${current + 1})" ${current >= pages ? 'disabled' : ''}>Sau →</button>`;
-    pg.innerHTML = html;
-  }
 
   function goPage(page) {
     currentOffset = (page - 1) * pageSize;
@@ -133,7 +136,7 @@
           <div><strong>Xử lý lúc:</strong> ${alert.resolved_at ? formatDateTime(alert.resolved_at) : '—'}</div>
         </div>
         ${alert.notes ? `<div style="margin-bottom:12px;"><strong>Ghi chú:</strong> ${alert.notes}</div>` : ''}
-        ${alert.audio_file_url ? `<div style="margin-bottom:12px;"><strong>Audio:</strong><br><audio controls style="margin-top:4px;"><source src="${alert.audio_file_url}" type="audio/mpeg"></audio></div>` : ''}
+        ${alert.audio_file_url ? `<div style="margin-bottom:12px;"><strong>Audio:</strong><br><audio controls style="margin-top:4px;"><source src="${alert.audio_file_url}"></audio></div>` : ''}
         <div><strong>Bằng chứng:</strong> ${alert.is_evidence ? '✅ Đã đánh dấu' : '❌ Không'}</div>
         ${logsHtml}
       `;

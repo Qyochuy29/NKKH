@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản lý người dùng — SafeVoice AI</title>
-  <link rel="stylesheet" href="/giao-dien.css">
+  <link rel="stylesheet" href="./giao-dien.css">
 </head>
 <body>
   <div class="app-layout">
@@ -32,6 +32,7 @@
               <tbody id="users-tbody"></tbody>
             </table>
           </div>
+          <div id="pagination-users"></div>
         </div>
       </div>
 
@@ -63,6 +64,13 @@
                 <option value="ban_giam_hieu">Ban giám hiệu</option>
                 <option value="giam_thi">Giám thị</option>
                 <option value="bao_ve">Bảo vệ</option>
+                <option value="phu_huynh">Phụ huynh</option>
+              </select>
+            </div>
+            <div class="form-group" id="classroom-group" style="display:none;">
+              <label>Lớp học (Dành cho Phụ huynh)</label>
+              <select class="form-control" id="user-classroom">
+                <option value="">-- Chọn lớp học --</option>
               </select>
             </div>
           </div>
@@ -76,7 +84,7 @@
     </main>
   </div>
 
-  <script src="/dung-chung.js"></script>
-  <script src="/nguoi-dung.js"></script>
+  <script src="./dung-chung.js?v=2"></script>
+  <script src="./nguoi-dung.js"></script>
 </body>
 </html>

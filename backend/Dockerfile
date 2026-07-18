@@ -28,10 +28,9 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# Frontend will be mounted via volume in docker-compose
-# But copy as fallback
-COPY frontend/ ./frontend/
-
+# Copy frontend statically served by NestJS
+COPY frontend/ ./frontend
+    # No frontend statically served anymore
 EXPOSE 3000
 
 # Use prisma db seed which reads the prisma.seed config from package.json

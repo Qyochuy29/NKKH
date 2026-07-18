@@ -1,5 +1,6 @@
 // tong-quan.js — Dashboard page logic
 (function() {
+  let hourlyChart = null;
   const user = initPage('dashboard');
   if (!user) return;
 
@@ -9,13 +10,16 @@
   loadHourlyChart();
 
   // Floor tabs
-  document.getElementById('floor-tabs').addEventListener('click', (e) => {
-    if (e.target.classList.contains('floor-tab')) {
-      document.querySelectorAll('.floor-tab').forEach(t => t.classList.remove('active'));
-      e.target.classList.add('active');
-      loadDevicesMap(parseInt(e.target.dataset.floor));
-    }
-  });
+  const floorTabs = document.getElementById('floor-tabs');
+  if (floorTabs) {
+    floorTabs.addEventListener('click', (e) => {
+      if (e.target.classList.contains('floor-tab')) {
+        document.querySelectorAll('.floor-tab').forEach(t => t.classList.remove('active'));
+        e.target.classList.add('active');
+        loadDevicesMap(parseInt(e.target.dataset.floor));
+      }
+    });
+  }
 
   // WebSocket: live alert feed
   onWsEvent('new-alert', (alert) => {
@@ -39,51 +43,39 @@
   async function loadDevicesMap(floor) {
     try {
       const devices = await api('GET', '/api/devices');
-      const floorDevices = devices.filter(d => d.floor === floor);
-      renderMap(floorDevices, floor);
+      renderDevicesTable(devices);
     } catch (err) {
       console.error('Failed to load devices:', err);
     }
   }
 
-  function renderMap(devices, floor) {
-    const svg = document.getElementById('map-svg');
-    // Draw school building outline
-    let html = `
-      <rect x="20" y="20" width="760" height="460" rx="8" fill="var(--bg-hover)" stroke="var(--border)" stroke-width="2"/>
-      <text x="400" y="50" text-anchor="middle" fill="var(--text-muted)" font-size="14" font-weight="600">Tầng ${floor} — Trường THPT Mẫu</text>
-      <!-- Rooms outline -->
-      <rect x="40" y="70" width="200" height="120" rx="4" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="4"/>
-      <text x="140" y="135" text-anchor="middle" fill="var(--text-muted)" font-size="10">Dãy phòng học A</text>
-      <rect x="260" y="70" width="200" height="120" rx="4" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="4"/>
-      <text x="360" y="135" text-anchor="middle" fill="var(--text-muted)" font-size="10">Hành lang</text>
-      <rect x="480" y="70" width="280" height="120" rx="4" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="4"/>
-      <text x="620" y="135" text-anchor="middle" fill="var(--text-muted)" font-size="10">Dãy phòng học B</text>
-      <rect x="40" y="220" width="340" height="120" rx="4" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="4"/>
-      <text x="210" y="285" text-anchor="middle" fill="var(--text-muted)" font-size="10">${floor === 1 ? 'Sân trường / Canteen' : 'Khu vực chung'}</text>
-      <rect x="400" y="220" width="360" height="120" rx="4" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="4"/>
-      <text x="580" y="285" text-anchor="middle" fill="var(--text-muted)" font-size="10">${floor === 1 ? 'Nhà xe / Cổng' : 'Phòng chức năng'}</text>
-      <rect x="40" y="370" width="720" height="90" rx="4" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="4"/>
-      <text x="400" y="420" text-anchor="middle" fill="var(--text-muted)" font-size="10">${floor === 1 ? 'Khu vực cổng trường' : 'Cầu thang / Nhà vệ sinh'}</text>
-    `;
+  function renderDevicesTable(devices) {
+    const tbody = document.getElementById('dashboard-devices-tbody');
+    if (!tbody) return;
+    
+    if (devices.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">Không có thiết bị nào</td></tr>';
+      return;
+    }
 
-    // Draw device dots
+    let html = '';
     devices.forEach(d => {
-      const x = 20 + (d.position_x / 100) * 760;
-      const y = 20 + (d.position_y / 100) * 460;
-      const color = d.status === 'online' ? 'var(--success)' :
-                    d.status === 'error' ? 'var(--danger)' : 'var(--text-muted)';
-      const pulse = d.status === 'error' ? `<animate attributeName="r" values="6;10;6" dur="1.5s" repeatCount="indefinite"/>` : '';
-
+      const statusColor = d.status === 'online' ? 'var(--success)' :
+                          d.status === 'error' ? 'var(--danger)' : 'var(--text-muted)';
+      const statusText = d.status === 'online' ? 'Trực tuyến' :
+                         d.status === 'error' ? 'Lỗi/Mất kết nối' : 'Ngoại tuyến';
+      const areaName = d.area?.name || d.area || 'Không xác định';
+      
       html += `
-        <circle cx="${x}" cy="${y}" r="6" fill="${color}" class="device-dot" opacity="0.9">
-          ${pulse}
-          <title>${d.name} — ${d.area} (${d.status}) Pin: ${d.battery_level}%</title>
-        </circle>
+        <tr>
+          <td><strong>${d.name}</strong></td>
+          <td>${areaName}</td>
+          <td><span style="color:${statusColor}; font-weight:600;">● ${statusText}</span></td>
+        </tr>
       `;
     });
 
-    svg.innerHTML = html;
+    tbody.innerHTML = html;
   }
 
   async function loadAlertFeed() {
@@ -109,11 +101,12 @@
           <span class="alert-card-type">${type.icon} ${type.label}</span>
           <span class="badge ${status.class}">${status.label}</span>
         </div>
-        <div class="alert-card-meta">
-          <span>📍 ${a.device?.area || '?'}</span>
+        <div class="alert-card-meta" style="margin-bottom: 8px;">
+          <span>📍 ${a.device?.area?.name || a.device?.area || '?'}</span>
           <span>🎯 ${a.confidence_score.toFixed(0)}%</span>
           <span>🕐 ${formatRelative(a.timestamp)}</span>
         </div>
+        ${a.audio_file_url ? `<div style="margin-top: 8px;"><audio controls preload="none" style="height:32px; width: 100%;"><source src="${a.audio_file_url}">Trình duyệt không hỗ trợ</audio></div>` : ''}
       </div>
     `;
   }
@@ -135,7 +128,6 @@
     }
   }
 
-  let hourlyChart = null;
   async function loadHourlyChart() {
     try {
       const data = await api('GET', '/api/statistics/hourly-today');
@@ -159,6 +151,7 @@
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
             y: { beginAtZero: true, ticks: { stepSize: 1 } },
@@ -167,6 +160,10 @@
         }
       });
     } catch (err) {
+      document.querySelector('#hourly-chart').parentElement.innerHTML = `<div style="color:red;padding:20px;font-family:monospace;">
+        <b>Chart Error:</b> ${err.message}<br>
+        <pre>${err.stack}</pre>
+      </div>`;
       console.error('Failed to load hourly chart:', err);
     }
   }

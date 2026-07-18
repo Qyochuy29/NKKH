@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "VR30oF8ZOHMUMK8I0Mr8OOxihdWoIn6LHFa5JMQhWk8=",
+  "Source": "SchoolGuardian.Api",
+  "BasePath": "_content/SchoolGuardian.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

@@ -21,6 +21,10 @@
       if (settings.audio_retention_days) {
         document.getElementById('retention-days').value = settings.audio_retention_days;
       }
+
+      if (settings.simulator_enabled) {
+        document.getElementById('simulator-enabled').checked = settings.simulator_enabled === 'true';
+      }
     } catch (err) {
       showToast('Lỗi', 'Không thể tải cài đặt: ' + err.message, 'danger');
     }
@@ -30,6 +34,7 @@
     const settings = [
       { key: 'min_confidence_threshold', value: document.getElementById('confidence-slider').value },
       { key: 'audio_retention_days', value: document.getElementById('retention-days').value },
+      { key: 'simulator_enabled', value: document.getElementById('simulator-enabled').checked ? 'true' : 'false' },
     ];
 
     try {

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tổng quan — SafeVoice AI</title>
   <meta name="description" content="Dashboard tổng quan giám sát an ninh trường học">
-  <link rel="stylesheet" href="/giao-dien.css">
+  <link rel="stylesheet" href="./giao-dien.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -50,20 +50,24 @@
       </div>
 
       <div class="grid-2">
-        <!-- School Map -->
+        <!-- Devices List -->
         <div class="card">
           <div class="card-header">
-            <h3>🏫 Sơ đồ trường học</h3>
-            <div class="floor-tabs" id="floor-tabs">
-              <button class="floor-tab active" data-floor="1">Tầng 1</button>
-              <button class="floor-tab" data-floor="2">Tầng 2</button>
-              <button class="floor-tab" data-floor="3">Tầng 3</button>
-            </div>
+            <h3>🎙️ Trạng thái thiết bị Micro</h3>
+            <a href="./thiet-bi.html" class="btn btn-outline btn-sm">Xem tất cả</a>
           </div>
-          <div class="card-body">
-            <div class="school-map-container" id="school-map">
-              <svg viewBox="0 0 800 500" id="map-svg"></svg>
-            </div>
+          <div class="card-body" style="max-height:400px;overflow-y:auto;padding:0;">
+            <table class="table" style="margin:0;">
+              <thead>
+                <tr>
+                  <th>Thiết bị</th>
+                  <th>Khu vực</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-devices-tbody">
+              </tbody>
+            </table>
           </div>
         </div>
 
@@ -71,7 +75,7 @@
         <div class="card">
           <div class="card-header">
             <h3>🔴 Cảnh báo mới nhất</h3>
-            <a href="/canh-bao.html" class="btn btn-outline btn-sm">Xem tất cả</a>
+            <a href="./canh-bao.html" class="btn btn-outline btn-sm">Xem tất cả</a>
           </div>
           <div class="card-body" style="max-height:400px;overflow-y:auto;">
             <div id="alert-feed"></div>
@@ -84,15 +88,15 @@
         <div class="card-header">
           <h3>📈 Xu hướng cảnh báo theo giờ hôm nay</h3>
         </div>
-        <div class="card-body">
-          <canvas id="hourly-chart" height="80"></canvas>
+        <div class="card-body" style="height: 300px; position: relative;">
+          <canvas id="hourly-chart"></canvas>
         </div>
       </div>
 
     </main>
   </div>
 
-  <script src="/dung-chung.js"></script>
-  <script src="/tong-quan.js"></script>
+  <script src="./dung-chung.js?v=5"></script>
+  <script src="./tong-quan.js?v=5"></script>
 </body>
 </html>

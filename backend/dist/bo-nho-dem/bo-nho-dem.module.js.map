@@ -1,1 +1,0 @@
-{"version":3,"file":"bo-nho-dem.module.js","sourceRoot":"","sources":["../../src/bo-nho-dem/bo-nho-dem.module.ts"],"names":[],"mappings":";;;;;;;;;AAAA,2CAAgD;AAChD,yDAAkD;AAO3C,IAAM,cAAc,GAApB,MAAM,cAAc;CAAG,CAAA;AAAjB,wCAAc;yBAAd,cAAc;IAL1B,IAAA,eAAM,GAAE;IACR,IAAA,eAAM,EAAC;QACN,SAAS,EAAE,CAAC,+BAAY,CAAC;QACzB,OAAO,EAAE,CAAC,+BAAY,CAAC;KACxB,CAAC;GACW,cAAc,CAAG"}
