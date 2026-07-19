@@ -4,3 +4,13 @@
 [0s] STT: 'Địt mẹ mày chó' | YAMNet: argument (0.94) | V: True, E: False, T: False
 [0s] STT: 'ra cổng trường chờ tao nhé Mày cẩn thận đấy' | YAMNet: argument (1.00) | V: False, E: False, T: False
 [0s] STT: 'ra cổng trường chờ tao nhé Mày cẩn thận đấy' | YAMNet: argument (1.00) | V: False, E: False, T: False
+[0s] STT: 'con chó Mày làm sao đánh nhau không mẹ mày Đánh nhau không' | YAMNet: argument (1.00) | V: True, E: False, T: False
+[0s] STT: 'cứu cứu cứu cứu cứu cứu' | YAMNet: argument (1.00) | V: False, E: True, T: False
+[0s] STT: 'cứu cứu cứu cứu cứu cứu' | YAMNet: argument (1.00) | V: False, E: True, T: False
+[0s] STT: 'con chó Mày làm sao đánh nhau không mẹ mày Đánh nhau không' | YAMNet: argument (1.00) | V: True, E: False, T: False
+[0s] STT: 'Địt con mẹ mày Tuổi lồn sánh vai cái địt con mẹ mày bố mày nhờn với mày đấy à' | YAMNet: argument (0.95) | V: True, E: False, T: True
+[10s] STT: 'Địt con mẹ mày Đánh chết cha bây giờ bố mày chào hỏi tử tế lại quay ra thể hiện cái thái độ lắm lồn là thế nào nhỉ' | YAMNet: argument (1.00) | V: True, E: False, T: True
+[20s] STT: '' | YAMNet: argument (0.99) | V: False, E: False, T: False
+[0s] STT: 'Địt con mẹ mày Tuổi lồn sánh vai cái địt con mẹ mày bố mày nhờn với mày đấy à' | YAMNet: argument (0.95) | V: True, E: False, T: True
+[10s] STT: 'Địt con mẹ mày Đánh chết cha bây giờ bố mày chào hỏi tử tế lại quay ra thể hiện cái thái độ lắm lồn là thế nào nhỉ' | YAMNet: argument (1.00) | V: True, E: False, T: True
+[20s] STT: '' | YAMNet: argument (0.99) | V: False, E: False, T: False
