@@ -18,7 +18,7 @@
         <div class="kpi-card blue">
           <div class="kpi-header">
             <span class="kpi-label">Thiết bị hoạt động</span>
-            <div class="kpi-icon">🎙️</div>
+            <div class="kpi-icon"><i class="bi bi-mic"></i></div>
           </div>
           <div class="kpi-value" id="kpi-devices">--</div>
           <div class="kpi-sub" id="kpi-devices-sub"></div>
@@ -26,7 +26,7 @@
         <div class="kpi-card red">
           <div class="kpi-header">
             <span class="kpi-label">Cảnh báo hôm nay</span>
-            <div class="kpi-icon">🚨</div>
+            <div class="kpi-icon"><i class="bi bi-exclamation-triangle"></i></div>
           </div>
           <div class="kpi-value" id="kpi-alerts">--</div>
           <div class="kpi-sub">Tính từ 00:00</div>
@@ -34,7 +34,7 @@
         <div class="kpi-card yellow">
           <div class="kpi-header">
             <span class="kpi-label">Khẩn cấp chưa xử lý</span>
-            <div class="kpi-icon">⚠️</div>
+            <div class="kpi-icon"><i class="bi bi-exclamation-circle"></i></div>
           </div>
           <div class="kpi-value" id="kpi-urgent">--</div>
           <div class="kpi-sub">Confidence ≥ 80%</div>
@@ -42,7 +42,7 @@
         <div class="kpi-card green">
           <div class="kpi-header">
             <span class="kpi-label">TG phản hồi TB</span>
-            <div class="kpi-icon">⏱️</div>
+            <div class="kpi-icon"><i class="bi bi-stopwatch"></i></div>
           </div>
           <div class="kpi-value" id="kpi-response">--</div>
           <div class="kpi-sub">7 ngày gần nhất</div>
@@ -53,7 +53,7 @@
         <!-- Devices List -->
         <div class="card">
           <div class="card-header">
-            <h3>🎙️ Trạng thái thiết bị Micro</h3>
+            <h3><i class="bi bi-mic text-primary"></i> Trạng thái thiết bị Micro</h3>
             <a href="./thiet-bi.html" class="btn btn-outline btn-sm">Xem tất cả</a>
           </div>
           <div class="card-body" style="max-height:400px;overflow-y:auto;padding:0;">
@@ -74,7 +74,7 @@
         <!-- Live Alert Feed -->
         <div class="card">
           <div class="card-header">
-            <h3>🔴 Cảnh báo mới nhất</h3>
+            <h3><i class="bi bi-bell-fill text-danger"></i> Cảnh báo mới nhất</h3>
             <a href="./canh-bao.html" class="btn btn-outline btn-sm">Xem tất cả</a>
           </div>
           <div class="card-body" style="max-height:400px;overflow-y:auto;">
@@ -86,7 +86,7 @@
       <!-- Hourly Trend Chart -->
       <div class="card" style="margin-top:20px;">
         <div class="card-header">
-          <h3>📈 Xu hướng cảnh báo theo giờ hôm nay</h3>
+          <h3><i class="bi bi-graph-up text-success"></i> Xu hướng cảnh báo theo giờ hôm nay</h3>
         </div>
         <div class="card-body" style="height: 300px; position: relative;">
           <canvas id="hourly-chart"></canvas>

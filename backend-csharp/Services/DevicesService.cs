@@ -18,7 +18,11 @@ namespace SchoolGuardian.Api.Services
                 .OrderBy(d => d.Floor).ThenBy(d => d.Name)
                 .Select(d => (object)new
                 {
-                    d.Id, d.Name, d.Floor, d.PositionX, d.PositionY,
+                    d.Id,
+                    d.Name,
+                    d.Floor,
+                    d.PositionX,
+                    d.PositionY,
                     status = d.Status.ToString(),
                     battery_level = d.BatteryLevel,
                     last_seen = d.LastSeen,
@@ -34,7 +38,11 @@ namespace SchoolGuardian.Api.Services
                 ?? throw new KeyNotFoundException("Không tìm thấy thiết bị");
             return new
             {
-                d.Id, d.Name, d.Floor, d.PositionX, d.PositionY,
+                d.Id,
+                d.Name,
+                d.Floor,
+                d.PositionX,
+                d.PositionY,
                 status = d.Status.ToString(),
                 battery_level = d.BatteryLevel,
                 last_seen = d.LastSeen,

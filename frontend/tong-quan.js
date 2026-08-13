@@ -68,9 +68,9 @@
       
       html += `
         <tr>
-          <td><strong>${d.name}</strong></td>
-          <td>${areaName}</td>
-          <td><span style="color:${statusColor}; font-weight:600;">● ${statusText}</span></td>
+          <td><strong>${escapeHTML(d.name)}</strong></td>
+          <td>${escapeHTML(areaName)}</td>
+          <td><span style="color:${statusColor}; font-weight:600;"><i class="bi bi-circle-fill" style="font-size:0.5rem;vertical-align:middle;margin-right:4px;"></i> ${statusText}</span></td>
         </tr>
       `;
     });
@@ -83,7 +83,7 @@
       const result = await api('GET', '/api/alerts?limit=10');
       const feed = document.getElementById('alert-feed');
       if (result.data.length === 0) {
-        feed.innerHTML = '<div class="empty-state"><div class="empty-icon">✅</div><h3>Không có cảnh báo</h3><p>Hệ thống đang hoạt động bình thường</p></div>';
+        feed.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="bi bi-check-circle text-success"></i></div><h3>Không có cảnh báo</h3><p>Hệ thống đang hoạt động bình thường</p></div>';
         return;
       }
       feed.innerHTML = result.data.map(a => renderAlertItem(a)).join('');
@@ -93,7 +93,7 @@
   }
 
   function renderAlertItem(a) {
-    const type = SOUND_TYPE_LABELS[a.sound_type] || { icon: '❓', label: a.sound_type, color: 'info' };
+    const type = SOUND_TYPE_LABELS[a.sound_type] || { icon: '<i class="bi bi-question-circle"></i>', label: a.sound_type, color: 'info' };
     const status = STATUS_LABELS[a.status] || { label: a.status, class: 'badge-muted' };
     return `
       <div class="alert-card ${getSeverityClass(a.confidence_score)}" style="padding:12px 16px;margin-bottom:8px;">
@@ -102,9 +102,9 @@
           <span class="badge ${status.class}">${status.label}</span>
         </div>
         <div class="alert-card-meta" style="margin-bottom: 8px;">
-          <span>📍 ${a.device?.area?.name || a.device?.area || '?'}</span>
-          <span>🎯 ${a.confidence_score.toFixed(0)}%</span>
-          <span>🕐 ${formatRelative(a.timestamp)}</span>
+          <span><i class="bi bi-geo-alt"></i> ${escapeHTML(a.device?.area?.name || a.device?.area || '?')}</span>
+          <span><i class="bi bi-bullseye"></i> ${a.confidence_score.toFixed(0)}%</span>
+          <span><i class="bi bi-clock"></i> ${formatRelative(a.timestamp)}</span>
         </div>
         ${a.audio_file_url ? `<div style="margin-top: 8px;"><audio controls preload="none" style="height:32px; width: 100%;"><source src="${a.audio_file_url}">Trình duyệt không hỗ trợ</audio></div>` : ''}
       </div>

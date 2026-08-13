@@ -77,13 +77,13 @@
 
     tbody.innerHTML = pagedUsers.map(u => `
       <tr>
-        <td><strong>${u.full_name}</strong></td>
-        <td>${u.email}</td>
-        <td><span class="badge badge-info">${roleLabels[u.role] || u.role}</span></td>
+        <td><strong>${escapeHTML(u.full_name)}</strong></td>
+        <td>${escapeHTML(u.email)}</td>
+        <td><span class="badge badge-info">${roleLabels[u.role] || escapeHTML(u.role)}</span></td>
         <td>${formatDate(u.created_at)}</td>
         <td style="display:flex;gap:8px;">
-          <button class="btn btn-outline btn-sm" onclick='editUser(${JSON.stringify(u).replace(/'/g, "\\'")})'>✏️ Sửa</button>
-          <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteUser('${u.id}', '${u.full_name}')">🗑️ Xóa</button>
+          <button class="btn btn-outline btn-sm" onclick='editUser(${JSON.stringify(u).replace(/'/g, "\\'")})'><i class="bi bi-pencil"></i> Sửa</button>
+          <button class="btn btn-outline btn-sm" style="color:var(--danger);border-color:var(--danger)" onclick="deleteUser('${u.id}', '${escapeHTML(u.full_name).replace(/'/g, "\\'")}')"><i class="bi bi-trash"></i> Xóa</button>
         </td>
       </tr>
     `).join('');

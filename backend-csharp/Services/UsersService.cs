@@ -62,7 +62,7 @@ namespace SchoolGuardian.Api.Services
         public async Task<object> Update(string id, UpdateUserDto dto)
         {
             var user = await _db.Users.FindAsync(id) ?? throw new KeyNotFoundException("Người dùng không tồn tại");
-            
+
             if (dto.Email != null && dto.Email != user.Email)
             {
                 if (await _db.Users.AnyAsync(u => u.Email == dto.Email))
@@ -73,7 +73,7 @@ namespace SchoolGuardian.Api.Services
             if (dto.FullName != null) user.FullName = dto.FullName;
             if (dto.Role != null) user.Role = Enum.Parse<Role>(dto.Role);
             if (dto.Password != null) user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password, 10);
-            
+
             if (user.Role == Role.phu_huynh && dto.ClassroomId != null)
             {
                 var student = await _db.Students.FirstOrDefaultAsync(s => s.ParentId == id);
@@ -100,7 +100,7 @@ namespace SchoolGuardian.Api.Services
         public async Task Remove(string id)
         {
             var user = await _db.Users.FindAsync(id) ?? throw new KeyNotFoundException("Người dùng không tồn tại");
-            
+
             var hasAlerts = await _db.Alerts.AnyAsync(a => a.HandledById == id);
             var hasLogs = await _db.AlertLogs.AnyAsync(l => l.ActorId == id);
             if (hasAlerts || hasLogs)

@@ -1,6 +1,8 @@
 /* ========== SafeVoice AI — COMMON JS ========== */
 
-const API_BASE = window.location.origin;
+const API_BASE = (window.location.protocol === 'file:' || window.location.port === '5500') 
+    ? 'http://localhost:5085' 
+    : window.location.origin;
 const WS_BASE = API_BASE.replace('http', 'ws');
 
 /* ========== JWT HELPERS ========== */
@@ -175,7 +177,7 @@ function showToast(title, message, severity = 'info') {
   const container = document.getElementById('toast-container');
   if (!container) return;
 
-  const icons = { danger: '🚨', warning: '⚠️', success: '✅', info: 'ℹ️' };
+  const icons = { danger: '<i class="bi bi-exclamation-triangle"></i>', warning: '<i class="bi bi-exclamation-circle"></i>', success: '<i class="bi bi-check-circle"></i>', info: '<i class="bi bi-info-circle"></i>' };
 
   const toast = document.createElement('div');
   toast.className = `toast ${severity}`;
@@ -195,10 +197,10 @@ function showToast(title, message, severity = 'info') {
 
 function showAlertToast(alert) {
   const typeLabels = {
-    scream: '🔴 La hét',
-    help: '🟠 Kêu cứu',
-    threat: '🟡 Đe dọa',
-    argument: '🟤 Cãi vã',
+    scream: '<i class="bi bi-volume-up" style="color:var(--danger)"></i> La hét',
+    help: '<i class="bi bi-person-arms-up" style="color:var(--warning)"></i> Kêu cứu',
+    threat: '<i class="bi bi-shield-exclamation" style="color:var(--caution)"></i> Đe dọa',
+    argument: '<i class="bi bi-chat-right-text" style="color:var(--info)"></i> Cãi vã',
   };
 
   const severity = alert.confidence_score >= 85 ? 'danger' : alert.confidence_score >= 70 ? 'warning' : 'info';
@@ -277,22 +279,22 @@ function renderAppShell(activePageId) {
   const initials = (user.name || 'U').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   const navItems = [
-    { id: 'dashboard', icon: '📊', label: 'Tổng quan', href: '/tong-quan.html' },
-    { id: 'alerts', icon: '🚨', label: 'Cảnh báo trực tiếp', href: '/canh-bao.html', badge: true },
-    { id: 'history', icon: '📋', label: 'Lịch sử cảnh báo', href: '/lich-su.html' },
-    { id: 'statistics', icon: '📈', label: 'Thống kê', href: '/thong-ke.html' }
+    { id: 'dashboard', icon: '<i class="bi bi-grid-1x2"></i>', label: 'Tổng quan', href: '/tong-quan.html' },
+    { id: 'alerts', icon: '<i class="bi bi-exclamation-triangle"></i>', label: 'Cảnh báo trực tiếp', href: '/canh-bao.html', badge: true },
+    { id: 'history', icon: '<i class="bi bi-clock-history"></i>', label: 'Lịch sử cảnh báo', href: '/lich-su.html' },
+    { id: 'statistics', icon: '<i class="bi bi-bar-chart-line"></i>', label: 'Thống kê', href: '/thong-ke.html' }
   ];
 
   if (user.role !== 'phu_huynh') {
-    navItems.push({ id: 'devices', icon: '🎙️', label: 'Thiết bị', href: '/thiet-bi.html' });
+    navItems.push({ id: 'devices', icon: '<i class="bi bi-mic"></i>', label: 'Thiết bị', href: '/thiet-bi.html' });
   }
 
   if (user.role === 'admin') {
-    navItems.push({ id: 'users', icon: '👥', label: 'Người dùng', href: '/nguoi-dung.html' });
-    navItems.push({ id: 'areas', icon: '🗺️', label: 'Khu vực', href: '/khu-vuc.html' });
+    navItems.push({ id: 'users', icon: '<i class="bi bi-people"></i>', label: 'Người dùng', href: '/nguoi-dung.html' });
+    navItems.push({ id: 'areas', icon: '<i class="bi bi-map"></i>', label: 'Khu vực', href: '/khu-vuc.html' });
   }
 
-  navItems.push({ id: 'settings', icon: '⚙️', label: 'Cài đặt', href: '/cai-dat.html' });
+  navItems.push({ id: 'settings', icon: '<i class="bi bi-gear"></i>', label: 'Cài đặt', href: '/cai-dat.html' });
 
   const pageTitles = {
     dashboard: 'Tổng quan',
@@ -342,6 +344,9 @@ function renderAppShell(activePageId) {
       </nav>
     </aside>
 
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
     <!-- Topbar -->
     <header class="topbar">
       <div class="topbar-left">
@@ -350,10 +355,10 @@ function renderAppShell(activePageId) {
       </div>
       <div class="topbar-right">
         <button class="topbar-btn" onclick="toggleTheme()" title="Chuyển đổi giao diện">
-          🌙
+          <i class="bi bi-moon"></i>
         </button>
         <button class="topbar-btn" onclick="window.location.href='/canh-bao.html'" title="Cảnh báo">
-          🔔
+          <i class="bi bi-bell"></i>
           <span class="badge" id="notification-badge" style="display:none">0</span>
         </button>
         <div class="user-info">
@@ -373,13 +378,16 @@ function renderAppShell(activePageId) {
 
   // Set up mobile sidebar toggle
   window.toggleSidebar = () => {
-    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebar').classList.toggle('sidebar-open');
+    const overlay = document.getElementById('sidebar-overlay');
+    if(overlay) overlay.classList.toggle('active');
   };
 
   // Close sidebar on link click (mobile)
   document.querySelectorAll('.sidebar .nav-item').forEach(item => {
     item.addEventListener('click', () => {
-      document.getElementById('sidebar')?.classList.remove('open');
+      document.getElementById('sidebar')?.classList.remove('sidebar-open');
+      document.getElementById('sidebar-overlay')?.classList.remove('active');
     });
   });
 }
@@ -415,12 +423,23 @@ function formatRelative(dateStr) {
   return `${days} ngày trước`;
 }
 
+/* ========== STRING HELPERS (SECURITY) ========== */
+function escapeHTML(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 /* ========== LABEL HELPERS ========== */
 const SOUND_TYPE_LABELS = {
-  scream: { label: 'La hét', icon: '🔴', color: 'danger' },
-  help: { label: 'Kêu cứu', icon: '🟠', color: 'warning' },
-  threat: { label: 'Đe dọa', icon: '🟡', color: 'caution' },
-  argument: { label: 'Cãi vã', icon: '🟤', color: 'info' },
+  scream: { label: 'La hét', icon: '<i class="bi bi-volume-up" style="color:var(--danger)"></i>', color: 'danger' },
+  help: { label: 'Kêu cứu', icon: '<i class="bi bi-person-arms-up" style="color:var(--warning)"></i>', color: 'warning' },
+  threat: { label: 'Đe dọa', icon: '<i class="bi bi-shield-exclamation" style="color:var(--caution)"></i>', color: 'caution' },
+  argument: { label: 'Cãi vã', icon: '<i class="bi bi-chat-right-text" style="color:var(--info)"></i>', color: 'info' },
 };
 
 const STATUS_LABELS = {

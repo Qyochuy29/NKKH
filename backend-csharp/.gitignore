@@ -1,0 +1,35 @@
+## Build output
+bin/
+obj/
+*.user
+
+## Runtime / temporary
+uploads/
+logs/
+
+## SQLite database files (development only, không commit)
+*.db
+*.db-shm
+*.db-wal
+app.db
+app.db-shm
+app.db-wal
+
+## User secrets & sensitive config
+appsettings.*.json
+!appsettings.json
+firebase-service-account.json
+*.pfx
+*.p12
+
+## IDE
+.vs/
+.vscode/
+*.suo
+
+## Rider
+.idea/
+
+## OS
+.DS_Store
+Thumbs.db

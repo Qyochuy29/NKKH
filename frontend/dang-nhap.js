@@ -54,4 +54,20 @@
     errorDiv.textContent = msg;
     errorDiv.classList.add('show');
   }
+
+  // Toggle password visibility
+  const viewPasswordIcon = document.querySelector('.view-password');
+  if (viewPasswordIcon) {
+    viewPasswordIcon.addEventListener('click', () => {
+      const passwordInput = document.getElementById('password');
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      
+      if (type === 'text') {
+        viewPasswordIcon.innerHTML = '<i class="bi bi-eye-slash" style="font-size: 1.2rem;"></i>';
+      } else {
+        viewPasswordIcon.innerHTML = '<i class="bi bi-eye" style="font-size: 1.2rem;"></i>';
+      }
+    });
+  }
 })();

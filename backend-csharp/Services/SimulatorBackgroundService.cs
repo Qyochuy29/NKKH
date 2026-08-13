@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -36,11 +37,10 @@ namespace SchoolGuardian.Api.Services
                         var alertsService = scope.ServiceProvider.GetRequiredService<AlertsService>();
 
                         // Lấy cấu hình bật tắt giả lập
-                        var setting = db.Settings.FirstOrDefault(s => s.Key == "simulator_enabled");
+                        var setting = await db.Settings.FirstOrDefaultAsync(s => s.Key == AppConstants.SettingKeys.SimulatorEnabled, stoppingToken);
                         if (setting == null || setting.Value != "true") continue;
 
-                        // Lấy danh sách thiết bị
-                        var devices = db.Devices.ToList();
+                        var devices = await db.Devices.ToListAsync(stoppingToken);
                         if (!devices.Any()) continue;
 
                         // Lấy thiết bị ngẫu nhiên

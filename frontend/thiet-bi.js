@@ -60,8 +60,8 @@
                           d.battery_level > 20 ? 'var(--warning)' : 'var(--danger)';
       return `
         <tr>
-          <td><strong>${d.name}</strong></td>
-          <td>${areaName}</td>
+          <td><strong>${escapeHTML(d.name)}</strong></td>
+          <td>${escapeHTML(areaName)}</td>
           <td>Tầng ${d.floor}</td>
           <td><span class="badge ${statusBadge}">${statusLabel}</span></td>
           <td>
@@ -69,7 +69,7 @@
             <span class="confidence-bar" style="width:50px;"><span class="confidence-bar-fill" style="width:${d.battery_level}%;background:${batteryColor}"></span></span>
           </td>
           <td>${formatRelative(d.last_seen)}</td>
-          <td><button class="btn btn-outline btn-sm" onclick='editDevice(${JSON.stringify(d).replace(/'/g, "\\'")})'>✏️ Sửa</button></td>
+          <td><button class="btn btn-outline btn-sm" onclick='editDevice(${JSON.stringify(d).replace(/'/g, "\\'")})'><i class="bi bi-pencil"></i> Sửa</button></td>
         </tr>
       `;
     }).join('');

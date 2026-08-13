@@ -1,0 +1,7 @@
+Flask==3.0.3
+numpy==1.26.4
+tensorflow==2.16.2
+tensorflow-hub==0.16.1
+librosa==0.10.2
+pydub==0.25.1
+SpeechRecognition==3.10.4

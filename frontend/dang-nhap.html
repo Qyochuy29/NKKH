@@ -8,37 +8,107 @@
   <link rel="stylesheet" href="./giao-dien.css">
 </head>
 <body>
-  <div class="login-page">
-    <div class="login-card">
-      <div class="login-brand">
-        <div class="brand-icon"><img src="./logo.png" alt="Logo"></div>
-        <h1>SafeVoice AI</h1>
-        <p>Hệ thống giám sát an ninh trường học</p>
-      </div>
+  <div class="login-split">
 
-      <div class="login-error" id="login-error"></div>
+    <!-- BEN TRAI: Branding -->
+    <div class="login-left">
+      <div class="login-left-content">
 
-      <form id="login-form" onsubmit="return false;">
-        <div class="form-group">
-          <label for="email">Email</label>
-          <input type="email" id="email" class="form-control" placeholder="Nhập email..." required autocomplete="email">
+        <div class="brand-top">
+          <img class="brand-logo" src="./logo.png" alt="Logo Truong">
+          <div class="brand-text">
+            <h2>TRƯỜNG ĐẠI HỌC SƯ PHẠM<br>KỸ THUẬT HƯNG YÊN</h2>
+            <p>Hung Yen University of Technology and Education</p>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="password">Mật khẩu</label>
-          <input type="password" id="password" class="form-control" placeholder="Nhập mật khẩu..." required autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn btn-primary login-btn" id="login-btn">
-          Đăng nhập
-        </button>
-      </form>
 
-      <div style="margin-top:24px;text-align:center;color:rgba(255,255,255,0.35);font-size:12px;">
-        <p>Demo: giamthi@gmail.com / password123</p>
+        <div class="brand-main">
+          <h3>"Nền tảng AI giám sát âm thanh<br>và cảnh báo bạo lực học đường."</h3>
+        </div>
+
+        <ul class="feature-list">
+          <li>
+            <div class="feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/></svg>
+            </div>
+            <span>Nhận diện âm thanh bất thường 24/7</span>
+          </li>
+          <li>
+            <div class="feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/></svg>
+            </div>
+            <span>Phân tích và phát hiện bạo lực tức thời</span>
+          </li>
+          <li>
+            <div class="feat-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <span>Gửi thông báo &amp; hình ảnh cảnh báo ngay lập tức</span>
+          </li>
+        </ul>
+
       </div>
     </div>
+
+    <!-- BEN PHAI: Form dang nhap -->
+    <div class="login-right">
+
+      <div class="help-link">
+        <a href="#">(?) Cần trợ giúp?</a>
+      </div>
+
+      <div class="login-card-new">
+
+        <div class="login-tag">SAFEVOICE AI</div>
+
+        <h1>Đăng nhập</h1>
+        <p class="login-desc">Hệ thống giám sát và cảnh báo bạo lực học đường.</p>
+
+        <div class="login-error" id="login-error"></div>
+
+        <form id="login-form" onsubmit="return false;">
+
+          <div class="form-group-new">
+            <label for="email">Tên đăng nhập</label>
+            <div class="input-wrapper">
+              <div class="input-icon-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <input type="email" id="email" placeholder="admin@gmail.com" required autocomplete="email">
+            </div>
+          </div>
+
+          <div class="form-group-new">
+            <label for="password">Mật khẩu</label>
+            <div class="input-wrapper">
+              <div class="input-icon-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <input type="password" id="password" placeholder="••••••••••" required autocomplete="current-password">
+              <div class="input-icon-right view-password">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="login-options-new">
+            <label class="checkbox-container">
+              <input type="checkbox" id="remember"> Ghi nhớ đăng nhập
+            </label>
+            <a href="#" class="forgot-pwd">Quên mật khẩu?</a>
+          </div>
+
+          <button type="submit" class="btn-submit" id="login-btn">
+            Đăng nhập &rarr;
+          </button>
+
+        </form>
+      </div>
+    </div>
+
   </div>
 
-  <script src="./dung-chung.js?v=2"></script>
+  <script src="./dung-chung.js?v=3"></script>
   <script src="./dang-nhap.js"></script>
 </body>
 </html>

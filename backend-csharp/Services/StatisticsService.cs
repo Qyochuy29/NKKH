@@ -15,7 +15,7 @@ namespace SchoolGuardian.Api.Services
             var q = _db.Alerts.AsQueryable();
             var d = _db.Devices.AsQueryable();
 
-            if (userRole == "phu_huynh" && !string.IsNullOrEmpty(userId))
+            if (userRole == AppConstants.Roles.PhuHuynh && !string.IsNullOrEmpty(userId))
             {
                 var classroomIds = await _db.Students.Where(s => s.ParentId == userId).Select(s => s.ClassroomId).ToListAsync();
                 q = q.Include(a => a.Device).Where(a => classroomIds.Contains(a.Device.AreaId));
@@ -47,7 +47,7 @@ namespace SchoolGuardian.Api.Services
         public async Task<List<object>> GetByType(string? userRole, string? userId)
         {
             var q = _db.Alerts.AsQueryable();
-            if (userRole == "phu_huynh" && !string.IsNullOrEmpty(userId))
+            if (userRole == AppConstants.Roles.PhuHuynh && !string.IsNullOrEmpty(userId))
             {
                 var classroomIds = await _db.Students.Where(s => s.ParentId == userId).Select(s => s.ClassroomId).ToListAsync();
                 q = q.Include(a => a.Device).Where(a => classroomIds.Contains(a.Device.AreaId));
@@ -62,23 +62,23 @@ namespace SchoolGuardian.Api.Services
         public async Task<List<object>> GetByArea(string? userRole, string? userId)
         {
             var q = _db.Alerts.Include(a => a.Device).ThenInclude(d => d.Area).AsQueryable();
-            if (userRole == "phu_huynh" && !string.IsNullOrEmpty(userId))
+            if (userRole == AppConstants.Roles.PhuHuynh && !string.IsNullOrEmpty(userId))
             {
                 var classroomIds = await _db.Students.Where(s => s.ParentId == userId).Select(s => s.ClassroomId).ToListAsync();
                 q = q.Where(a => classroomIds.Contains(a.Device.AreaId));
             }
 
-            var alerts = await q.ToListAsync();
-            return alerts.GroupBy(a => a.Device.Area.Name)
-                .Select(g => (object)new { area = g.Key, count = g.Count() })
-                .OrderByDescending(x => ((dynamic)x).count)
-                .ToList();
+            var result = await q.GroupBy(a => a.Device.Area.Name)
+                .Select(g => new { area = g.Key, count = g.Count() })
+                .OrderByDescending(x => x.count)
+                .ToListAsync();
+            return result.Cast<object>().ToList();
         }
 
         public async Task<List<object>> GetTrend(string period, string? userRole, string? userId)
         {
             var q = _db.Alerts.AsQueryable();
-            if (userRole == "phu_huynh" && !string.IsNullOrEmpty(userId))
+            if (userRole == AppConstants.Roles.PhuHuynh && !string.IsNullOrEmpty(userId))
             {
                 var classroomIds = await _db.Students.Where(s => s.ParentId == userId).Select(s => s.ClassroomId).ToListAsync();
                 q = q.Include(a => a.Device).Where(a => classroomIds.Contains(a.Device.AreaId));
@@ -101,27 +101,29 @@ namespace SchoolGuardian.Api.Services
         public async Task<List<object>> GetHeatmap(string? userRole, string? userId)
         {
             var q = _db.Alerts.Include(a => a.Device).ThenInclude(d => d.Area).AsQueryable();
-            if (userRole == "phu_huynh" && !string.IsNullOrEmpty(userId))
+            if (userRole == AppConstants.Roles.PhuHuynh && !string.IsNullOrEmpty(userId))
             {
                 var classroomIds = await _db.Students.Where(s => s.ParentId == userId).Select(s => s.ClassroomId).ToListAsync();
                 q = q.Where(a => classroomIds.Contains(a.Device.AreaId));
             }
 
             var since = DateTime.UtcNow.AddDays(-30);
-            var alerts = await q.Where(a => a.Timestamp >= since).ToListAsync();
+            var alertsData = await q.Where(a => a.Timestamp >= since)
+                .Select(a => new { AreaName = a.Device.Area.Name, Hour = a.Timestamp.Hour })
+                .ToListAsync();
 
-            return alerts.GroupBy(a => a.Device.Area.Name)
+            return alertsData.GroupBy(a => a.AreaName)
                 .Select(g => (object)new
                 {
                     area = g.Key,
-                    hours = Enumerable.Range(0, 24).Select(h => new { hour = h, count = g.Count(a => a.Timestamp.Hour == h) })
+                    hours = Enumerable.Range(0, 24).Select(h => new { hour = h, count = g.Count(x => x.Hour == h) })
                 }).ToList();
         }
 
         public async Task<object> GetAlertRatio(string? userRole, string? userId)
         {
             var q = _db.Alerts.AsQueryable();
-            if (userRole == "phu_huynh" && !string.IsNullOrEmpty(userId))
+            if (userRole == AppConstants.Roles.PhuHuynh && !string.IsNullOrEmpty(userId))
             {
                 var classroomIds = await _db.Students.Where(s => s.ParentId == userId).Select(s => s.ClassroomId).ToListAsync();
                 q = q.Include(a => a.Device).Where(a => classroomIds.Contains(a.Device.AreaId));
@@ -136,16 +138,16 @@ namespace SchoolGuardian.Api.Services
         public async Task<List<object>> GetHourlyToday(string? userRole, string? userId)
         {
             var q = _db.Alerts.AsQueryable();
-            if (userRole == "phu_huynh" && !string.IsNullOrEmpty(userId))
+            if (userRole == AppConstants.Roles.PhuHuynh && !string.IsNullOrEmpty(userId))
             {
                 var classroomIds = await _db.Students.Where(s => s.ParentId == userId).Select(s => s.ClassroomId).ToListAsync();
                 q = q.Include(a => a.Device).Where(a => classroomIds.Contains(a.Device.AreaId));
             }
 
             var today = DateTime.UtcNow.Date;
-            var alerts = await q.Where(a => a.Timestamp >= today).Select(a => a.Timestamp).ToListAsync();
+            var hours = await q.Where(a => a.Timestamp >= today).Select(a => a.Timestamp.Hour).ToListAsync();
             return Enumerable.Range(0, 24)
-                .Select(h => (object)new { hour = h, count = alerts.Count(a => a.Hour == h) })
+                .Select(h => (object)new { hour = h, count = hours.Count(x => x == h) })
                 .ToList();
         }
     }

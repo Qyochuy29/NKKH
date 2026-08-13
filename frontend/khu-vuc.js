@@ -48,18 +48,18 @@
     tbody.innerHTML = pagedAreas.map((a, idx) => `
       <tr>
         <td style="color:var(--text-muted);font-size:13px;">${start + idx + 1}</td>
-        <td><strong>${a.name}</strong></td>
-        <td style="color:var(--text-secondary);font-size:13px;">${a.description || '<em style="color:var(--text-muted)">—</em>'}</td>
+        <td><strong>${escapeHTML(a.name)}</strong></td>
+        <td style="color:var(--text-secondary);font-size:13px;">${escapeHTML(a.description || '') || '<em style="color:var(--text-muted)">—</em>'}</td>
         <td>
           <span class="badge ${a.device_count > 0 ? 'badge-online' : 'badge-muted'}">
-            🎙️ ${a.device_count} thiết bị
+            <i class="bi bi-mic"></i> ${a.device_count} thiết bị
           </span>
         </td>
         <td style="font-size:13px;color:var(--text-muted);">${formatDate(a.created_at)}</td>
         <td style="display:flex;gap:6px;justify-content:flex-end;">
           ${user.role === 'admin' ? `
-            <button class="btn btn-outline btn-sm" onclick='editArea(${JSON.stringify(a).replace(/'/g, "\\'")})'>✏️ Sửa</button>
-            <button class="btn btn-sm" style="background:var(--danger);color:#fff;" onclick="deleteArea('${a.id}','${a.name.replace(/'/g, "\\'")}',${a.device_count})">🗑️ Xoá</button>
+            <button class="btn btn-outline btn-sm" onclick='editArea(${JSON.stringify(a).replace(/'/g, "\\'")})'><i class="bi bi-pencil"></i> Sửa</button>
+            <button class="btn btn-sm" style="background:var(--danger);color:#fff;" onclick="deleteArea('${a.id}','${a.name.replace(/'/g, "\\'")}',${a.device_count})"><i class="bi bi-trash"></i> Xoá</button>
           ` : ''}
         </td>
       </tr>
@@ -129,8 +129,8 @@
   function deleteArea(id, name, deviceCount) {
     pendingDeleteId = id;
     const msg = deviceCount > 0
-      ? `Khu vực <strong>"${name}"</strong> hiện có <strong>${deviceCount} thiết bị</strong> đang sử dụng.<br><br>Bạn cần gỡ hoặc chuyển thiết bị sang khu vực khác trước khi xoá.`
-      : `Bạn có chắc muốn xoá khu vực <strong>"${name}"</strong>?<br><br>Hành động này không thể hoàn tác.`;
+      ? `Khu vực <strong>"${escapeHTML(name)}"</strong> hiện có <strong>${deviceCount} thiết bị</strong> đang sử dụng.<br><br>Bạn cần gỡ hoặc chuyển thiết bị sang khu vực khác trước khi xoá.`
+      : `Bạn có chắc muốn xoá khu vực <strong>"${escapeHTML(name)}"</strong>?<br><br>Hành động này không thể hoàn tác.`;
     document.getElementById('area-delete-msg').innerHTML = msg;
     const confirmBtn = document.getElementById('area-delete-confirm-btn');
     confirmBtn.disabled = deviceCount > 0;

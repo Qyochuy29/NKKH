@@ -47,9 +47,9 @@
     const area = document.getElementById('filter-area').value;
 
     let url = `/api/alerts?offset=${currentOffset}&limit=${pageSize}`;
-    if (from) url += `&date_from=${from}`;
-    if (to) url += `&date_to=${to}T23:59:59`;
-    if (type) url += `&sound_type=${type}`;
+    if (from) url += `&dateFrom=${from}`;
+    if (to) url += `&dateTo=${to}T23:59:59`;
+    if (type) url += `&soundType=${type}`;
     if (status) url += `&status=${status}`;
     if (area) url += `&area=${encodeURIComponent(area)}`;
 
@@ -77,14 +77,14 @@
         <tr style="cursor:pointer" onclick="showDetail('${a.id}')">
           <td>${formatDateTime(a.timestamp)}</td>
           <td>${type.icon} ${type.label}</td>
-          <td>${a.device?.area?.name || a.device?.area || '?'}</td>
-          <td>${a.device?.name || '?'}</td>
+          <td>${escapeHTML(a.device?.area?.name || a.device?.area || '?')}</td>
+          <td>${escapeHTML(a.device?.name || '?')}</td>
           <td>
             <span class="confidence-bar"><span class="confidence-bar-fill" style="width:${a.confidence_score}%;background:${getConfidenceColor(a.confidence_score)}"></span></span>
             ${a.confidence_score.toFixed(0)}%
           </td>
           <td><span class="badge ${status.class}">${status.label}</span></td>
-          <td>${a.handled_by?.full_name || '—'}</td>
+          <td>${escapeHTML(a.handled_by?.full_name || '—')}</td>
           <td onclick="event.stopPropagation()">
             ${a.audio_file_url ? `<audio controls style="height:32px; width:160px;" preload="none"><source src="${a.audio_file_url}"></audio>` : '<span style="color:#aaa;font-size:12px;">Không có</span>'}
           </td>
@@ -128,14 +128,18 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
           <div><strong>Loại âm thanh:</strong> ${type.icon} ${type.label}</div>
           <div><strong>Trạng thái:</strong> <span class="badge ${status.class}">${status.label}</span></div>
-          <div><strong>Khu vực:</strong> ${alert.device?.area?.name || alert.device?.area || '?'}</div>
-          <div><strong>Thiết bị:</strong> ${alert.device?.name || '?'}</div>
+          <div><strong>Khu vực:</strong> ${escapeHTML(alert.device?.area?.name || alert.device?.area || '?')}</div>
+          <div><strong>Thiết bị:</strong> ${escapeHTML(alert.device?.name || '?')}</div>
           <div><strong>Confidence:</strong> ${alert.confidence_score.toFixed(1)}%</div>
           <div><strong>Thời gian:</strong> ${formatDateTime(alert.timestamp)}</div>
-          <div><strong>Người xử lý:</strong> ${alert.handled_by?.full_name || '—'}</div>
+          <div><strong>Người xử lý:</strong> ${escapeHTML(alert.handled_by?.full_name || '—')}</div>
           <div><strong>Xử lý lúc:</strong> ${alert.resolved_at ? formatDateTime(alert.resolved_at) : '—'}</div>
         </div>
-        ${alert.notes ? `<div style="margin-bottom:12px;"><strong>Ghi chú:</strong> ${alert.notes}</div>` : ''}
+        ${alert.notes ? `<div style="margin-bottom:12px;"><strong>Ghi chú:</strong> <br> ${
+          alert.notes.includes('[Giây') 
+            ? `<div style="background: rgba(239, 68, 68, 0.05); color: var(--danger); padding: 8px 12px; border-radius: 6px; margin-top: 6px; border-left: 3px solid var(--danger); font-size: 13px;"><i class="bi bi-robot text-primary"></i> ${escapeHTML(alert.notes.replace(/<i[^>]*><\/i>/g, '').replace(/🗣|🔇/g, '').replace(/AI:/g, '').trim())}</div>`
+            : `<span style="font-size:13px; color:var(--text-secondary);"><i class="bi bi-pencil-square"></i> ${escapeHTML(alert.notes.replace(/<i[^>]*><\/i>/g, '').trim())}</span>`
+        }</div>` : ''}
         ${alert.audio_file_url ? `<div style="margin-bottom:12px;"><strong>Audio:</strong><br><audio controls style="margin-top:4px;"><source src="${alert.audio_file_url}"></audio></div>` : ''}
         <div><strong>Bằng chứng:</strong> ${alert.is_evidence ? '✅ Đã đánh dấu' : '❌ Không'}</div>
         ${logsHtml}

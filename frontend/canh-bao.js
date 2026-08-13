@@ -52,7 +52,7 @@
       }
       
       const data = await res.json();
-      const count = data.totalAlerts ?? 0;
+      const count = data.total_alerts ?? data.totalAlerts ?? 0;
 
       if (count > 0) {
         showToast('🚨 Phân tích hoàn tất', `Tìm thấy ${count} cảnh báo trong file âm thanh!`, 'danger');
@@ -88,7 +88,7 @@
     const area = document.getElementById('filter-area').value;
 
     let url = '/api/alerts?limit=1000';
-    if (type) url += `&sound_type=${type}`;
+    if (type) url += `&soundType=${type}`;
     if (status) url += `&status=${status}`;
     if (area) url += `&area=${encodeURIComponent(area)}`;
 
@@ -140,8 +140,25 @@
       ? `<audio controls preload="none" style="height:32px;"><source src="${a.audio_file_url}">Trình duyệt không hỗ trợ</audio>`
       : '';
 
-    return `
+    function formatNotesHtml(notes, soundType) {
+      if (!notes) return '';
+      // Clean up old emojis and legacy HTML tags from DB
+      let cleanNotes = notes.replace(/<i[^>]*><\/i>/g, '').replace(/🗣|🔇/g, '').replace(/AI:/g, '').trim();
+      
+      // Escape HTML for XSS protection
+      let text = escapeHTML(cleanNotes);
+      
+      let icon = '';
+      if (soundType === 'threat') icon = '<i class="bi bi-exclamation-triangle-fill text-warning"></i>';
+      else if (soundType === 'scream') icon = '<i class="bi bi-volume-up-fill text-danger"></i>';
+      else if (soundType === 'help') icon = '<i class="bi bi-person-arms-up text-danger"></i>';
+      else if (soundType === 'argument') icon = '<i class="bi bi-chat-right-text-fill text-info"></i>';
+      
+      return `${icon} ${text}`;
+    }
+      return `
       <div class="alert-card ${getSeverityClass(a.confidence_score)}" id="alert-${a.id}">
+
         <div class="alert-card-header">
           <span class="alert-card-type">
             ${type.icon} ${type.label}
@@ -151,18 +168,22 @@
           <span class="badge ${status.class}">${status.label}</span>
         </div>
         <div class="alert-card-meta">
-          <span>📍 ${a.device?.area?.name || a.device?.area || '?'} — ${a.device?.name || ''}</span>
-          <span>🕐 ${formatDateTime(a.timestamp)}</span>
-          ${a.handled_by ? `<span>👤 ${a.handled_by.full_name}</span>` : ''}
+          <span><i class="bi bi-geo-alt-fill"></i> ${escapeHTML(a.device?.area?.name || a.device?.area || '?')} — ${escapeHTML(a.device?.name || '')}</span>
+          <span><i class="bi bi-clock-fill"></i> ${formatDateTime(a.timestamp)}</span>
+          ${a.handled_by ? `<span><i class="bi bi-person-check-fill"></i> ${escapeHTML(a.handled_by.full_name)}</span>` : ''}
         </div>
         <div class="alert-card-body" style="margin-top:10px;">
           <div>${audioHtml}</div>
-          ${a.notes && a.notes.includes('🗣') ? `
-            <div style="background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 8px 12px; border-radius: 6px; margin: 12px 0 8px 0; font-weight: 600; font-size: 13px; border-left: 3px solid var(--danger);">
-              ${a.notes}
-            </div>
-          ` : ''}
-          ${a.notes && !a.notes.includes('🗣') ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">📝 ${a.notes}</div>` : ''}
+          ${a.dialog_data || (a.notes && a.notes.includes('[Giây')) ? `
+              <div style="background: rgba(239, 68, 68, 0.05); color: var(--danger); padding: 12px; border-radius: 8px; margin: 12px 0 8px 0; font-weight: 600; font-size: 14px; border-left: 4px solid var(--danger);">
+                <div style="margin-bottom: 8px;"><i class="bi bi-robot text-primary"></i> ${formatNotesHtml(a.notes, a.sound_type)}</div>
+                ${a.dialog_data ? `
+                <button onclick="window.openDialogModal('${a.id}')" style="background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                  <i class="bi bi-chat-text"></i> Xem chi tiết AI phân tích
+                </button>
+                ` : ''}
+              </div>
+            ` : (a.notes ? `<div style="font-size:12px;color:var(--text-secondary);margin-top:4px;"><i class="bi bi-pencil-square"></i> Ghi chú: ${escapeHTML(a.notes)}</div>` : '')}
         </div>
       </div>
     `;
@@ -179,4 +200,60 @@
     el.classList.add('alert-new');
     list.prepend(el);
   }
+
+  window.openDialogModal = async function(alertId) {
+    const modalBody = document.getElementById('dialog-modal-body');
+    const modal = document.getElementById('dialog-modal');
+
+    modalBody.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-secondary)"><i class="bi bi-hourglass-split" style="font-size:32px"></i><p style="margin-top:12px">Đang tải dữ liệu...</p></div>';
+    modal.style.display = 'flex';
+
+    try {
+      const alertData = await api('GET', `/api/alerts/${alertId}`);
+      const dialogDataObj = alertData.dialog_data;
+
+      // dialog_data là object: { dialogue: [...], violence_probability, ... }
+      // hoặc dialog_data chính là mảng (fallback)
+      const dialogue = Array.isArray(dialogDataObj)
+        ? dialogDataObj
+        : (dialogDataObj?.dialogue ?? []);
+
+      const prob = dialogDataObj?.violence_probability ?? null;
+      const scream = dialogDataObj?.has_scream ?? false;
+      const threats = dialogDataObj?.threats_count ?? 0;
+      const vulgarity = dialogDataObj?.vulgarity_count ?? 0;
+
+      if (dialogue.length === 0) {
+        modalBody.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-secondary)"><i class="bi bi-chat-x" style="font-size:32px"></i><p style="margin-top:12px">Không có dữ liệu đối thoại cho cảnh báo này.</p></div>';
+        return;
+      }
+
+      let statsHtml = '';
+      if (prob !== null) {
+        const probColor = prob >= 70 ? 'var(--danger)' : prob >= 40 ? '#f59e0b' : '#10b981';
+        statsHtml = `<div style="display:flex;gap:16px;flex-wrap:wrap;padding:12px 16px;background:rgba(239,68,68,0.07);border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:600;">
+          <span><i class="bi bi-exclamation-triangle-fill" style="color:${probColor}"></i> Tỉ lệ bạo lực: <strong style="color:${probColor};font-size:16px">${prob.toFixed(0)}%</strong></span>
+          ${scream ? '<span><i class="bi bi-volume-up-fill text-danger"></i> Có tiếng la hét</span>' : ''}
+          ${threats > 0 ? `<span><i class="bi bi-shield-x-fill text-danger"></i> Lời đe dọa: ${threats}</span>` : ''}
+          ${vulgarity > 0 ? `<span><i class="bi bi-chat-x-fill text-warning"></i> Chửi thề: ${vulgarity}</span>` : ''}
+        </div>`;
+      }
+
+      const html = dialogue.map(d => {
+        const isAI = (d.speaker || '').toLowerCase() === 'ai';
+        const bg = isAI ? 'rgba(239,68,68,0.07)' : 'rgba(0,0,0,0.03)';
+        const borderColor = isAI ? 'var(--danger)' : '#d1d5db';
+        const ts = escapeHTML(d.timestamp_s ?? d.time ?? d.timestamp ?? '?');
+        return `<div style="background:${bg};border-left:3px solid ${borderColor};padding:10px 14px;border-radius:0 8px 8px 0;margin-bottom:10px;font-size:14px;">
+          <span style="font-size:11px;color:var(--text-secondary);font-weight:600;">[Giây ${ts}]</span>
+          <strong style="color:${isAI ? 'var(--danger)' : 'var(--text)'}"> ${escapeHTML(d.speaker ?? 'Unknown')}:</strong>
+          <span style="color:var(--text)"> ${escapeHTML(d.text ?? '')}</span>
+        </div>`;
+      }).join('');
+
+      modalBody.innerHTML = statsHtml + html;
+    } catch (err) {
+      modalBody.innerHTML = `<div style="text-align:center;padding:30px;color:var(--danger)"><i class="bi bi-exclamation-triangle" style="font-size:32px"></i><p style="margin-top:12px">Lỗi tải dữ liệu: ${err.message}</p></div>`;
+    }
+  };
 })();

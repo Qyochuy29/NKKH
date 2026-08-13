@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Npgsql;
 using SchoolGuardian.Api.Data;
 using SchoolGuardian.Api.Hubs;
 using SchoolGuardian.Api.Models;
@@ -13,27 +12,40 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ============================================================
 // 1. Database - Entity Framework Core with PostgreSQL
-// QUAN TRỌNG: Phải đăng ký Postgres Enum trước khi tạo DbContext
-// vì database dùng native PostgreSQL enum types (public.Role, v.v.)
 // ============================================================
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection")!;
-
-// Đăng ký tất cả các Postgres Enum types (tên phân biệt hoa thường theo Prisma)
-var dataSourceBuilder = new NpgsqlDataSourceBuilder(connStr);
-dataSourceBuilder.MapEnum<Role>("Role");
-dataSourceBuilder.MapEnum<DeviceStatus>("DeviceStatus");
-dataSourceBuilder.MapEnum<SoundType>("SoundType");
-dataSourceBuilder.MapEnum<AlertStatus>("AlertStatus");
+var dataSourceBuilder = new Npgsql.NpgsqlDataSourceBuilder(connStr);
+dataSourceBuilder.EnableUnmappedTypes();
 var dataSource = dataSourceBuilder.Build();
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(dataSource, o => 
+try
+{
+    using (var connection = new Npgsql.NpgsqlConnection(connStr))
     {
-        o.MapEnum<Role>("Role");
-        o.MapEnum<DeviceStatus>("DeviceStatus");
-        o.MapEnum<SoundType>("SoundType");
-        o.MapEnum<AlertStatus>("AlertStatus");
-    }));
+        connection.Open();
+        string alterScript = @"
+            DO $$ 
+            BEGIN 
+                -- Change enum columns to text to avoid Npgsql mapping issues
+                ALTER TABLE users ALTER COLUMN role TYPE text USING role::text;
+                ALTER TABLE devices ALTER COLUMN status TYPE text USING status::text;
+                ALTER TABLE alerts ALTER COLUMN sound_type TYPE text USING sound_type::text;
+                ALTER TABLE alerts ALTER COLUMN status TYPE text USING status::text;
+            EXCEPTION WHEN others THEN
+                -- Ignore errors if columns are already text
+            END $$;
+        ";
+        using var cmd = new Npgsql.NpgsqlCommand(alterScript, connection);
+        cmd.ExecuteNonQuery();
+    }
+}
+catch (Exception)
+{
+    // Ignore error if DB is not available at design-time (e.g., during migrations)
+}
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(dataSource));
 
 
 // ============================================================
@@ -80,13 +92,16 @@ builder.Services.AddCors(options =>
 // 4. SignalR (thay thế Socket.IO của NestJS)
 // ============================================================
 builder.Services.AddSignalR()
-    .AddJsonProtocol(options => {
+    .AddJsonProtocol(options =>
+    {
         options.PayloadSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
     });
 
 // ============================================================
 // 5. Dependency Injection - Register all Services
 // ============================================================
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IPushNotificationService, PushNotificationService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UsersService>();
 builder.Services.AddScoped<AreasService>();
@@ -94,6 +109,7 @@ builder.Services.AddScoped<DevicesService>();
 builder.Services.AddScoped<AlertsService>();
 builder.Services.AddScoped<StatisticsService>();
 builder.Services.AddScoped<SettingsService>();
+builder.Services.AddScoped<ParentService>();
 builder.Services.AddHostedService<SimulatorBackgroundService>();
 
 // ============================================================
@@ -136,6 +152,11 @@ app.UseStaticFiles(new StaticFileOptions
     ServeUnknownFileTypes = true
 });
 var frontendPath = Path.Combine(Directory.GetCurrentDirectory(), "frontend");
+if (!Directory.Exists(frontendPath))
+{
+    frontendPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "frontend");
+}
+
 if (Directory.Exists(frontendPath))
 {
     app.UseStaticFiles(new StaticFileOptions
@@ -150,5 +171,39 @@ app.MapControllers();
 // SignalR Hub - Frontend kết nối tới /ws/alerts
 // (tương đương namespace '/ws/alerts' của Socket.IO trong NestJS)
 app.MapHub<AlertHub>("/ws/alerts");
+
+// Auto-migrate and seed database
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.EnsureCreated();
+
+    if (!db.Users.Any())
+    {
+        var admin = new User { Id = Guid.NewGuid().ToString(), FullName = "Admin", Email = "admin@gmail.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"), Role = Role.admin };
+        var bgh = new User { Id = Guid.NewGuid().ToString(), FullName = "Ban Giám Hiệu", Email = "bgh@gmail.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"), Role = Role.ban_giam_hieu };
+        var giamthi = new User { Id = Guid.NewGuid().ToString(), FullName = "Giám Thị", Email = "giamthi@gmail.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"), Role = Role.giam_thi };
+        var phuhuynh = new User { Id = Guid.NewGuid().ToString(), FullName = "Phụ Huynh A", Email = "phuhuynh@gmail.com", PasswordHash = BCrypt.Net.BCrypt.HashPassword("password123"), Role = Role.phu_huynh };
+
+        db.Users.AddRange(admin, bgh, giamthi, phuhuynh);
+
+        var area1 = new Area { Id = Guid.NewGuid().ToString(), Name = "Hành lang Tầng 1", Description = "Khu vực hành lang chính" };
+        var area2 = new Area { Id = Guid.NewGuid().ToString(), Name = "Sân sau", Description = "Khu vực tập trung đông học sinh" };
+        var classroom = new Area { Id = Guid.NewGuid().ToString(), Name = "Lớp 10A1", Description = "Phòng học chuẩn" };
+
+        db.Areas.AddRange(area1, area2, classroom);
+
+        var device1 = new Device { Id = Guid.NewGuid().ToString(), Name = "Cam-HL1", AreaId = area1.Id, Floor = 1, PositionX = 10.5, PositionY = 20.0, Status = DeviceStatus.online, BatteryLevel = 100 };
+        var device2 = new Device { Id = Guid.NewGuid().ToString(), Name = "Cam-SS", AreaId = area2.Id, Floor = 1, PositionX = 5.0, PositionY = 50.0, Status = DeviceStatus.online, BatteryLevel = 90 };
+
+        db.Devices.AddRange(device1, device2);
+
+        var student = new Student { Id = Guid.NewGuid().ToString(), FullName = "Học sinh A", ParentId = phuhuynh.Id, ClassroomId = classroom.Id };
+
+        db.Students.Add(student);
+
+        db.SaveChanges();
+    }
+}
 
 app.Run();

@@ -1,0 +1,1 @@
+CREATE CAST (character varying AS "Role") WITH INOUT AS IMPLICIT; CREATE CAST (character varying AS "AlertStatus") WITH INOUT AS IMPLICIT; CREATE CAST (character varying AS "DeviceStatus") WITH INOUT AS IMPLICIT; CREATE CAST (character varying AS "SoundType") WITH INOUT AS IMPLICIT;

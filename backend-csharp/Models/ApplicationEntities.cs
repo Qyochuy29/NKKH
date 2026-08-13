@@ -60,10 +60,41 @@ namespace SchoolGuardian.Api.Models
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [Column("is_active")]
+        public bool IsActive { get; set; } = true;
+
+        [InverseProperty("User")]
+        public ICollection<UserDevice> Devices { get; set; }
+
         [InverseProperty("HandledBy")]
         public ICollection<Alert> HandledAlerts { get; set; }
 
         public ICollection<AlertLog> AlertLogs { get; set; }
+    }
+
+    [Table("user_devices")]
+    public class UserDevice
+    {
+        [Key]
+        [Column("id")]
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+
+        [Required]
+        [Column("user_id")]
+        public string UserId { get; set; }
+
+        [Required]
+        [Column("fcm_token")]
+        public string FcmToken { get; set; }
+
+        [Column("device_name")]
+        public string? DeviceName { get; set; }
+
+        [Column("last_active")]
+        public DateTime LastActive { get; set; } = DateTime.UtcNow;
+
+        [ForeignKey("UserId")]
+        public User User { get; set; }
     }
 
     [Table("areas")]
@@ -82,6 +113,9 @@ namespace SchoolGuardian.Api.Models
 
         [Column("created_at")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        [Column("is_active")]
+        public bool IsActive { get; set; } = true;
 
         public ICollection<Device> Devices { get; set; }
     }
@@ -119,6 +153,9 @@ namespace SchoolGuardian.Api.Models
         [Column("last_seen")]
         public DateTime LastSeen { get; set; } = DateTime.UtcNow;
 
+        [Column("is_active")]
+        public bool IsActive { get; set; } = true;
+
         [ForeignKey("AreaId")]
         public Area Area { get; set; }
 
@@ -148,6 +185,12 @@ namespace SchoolGuardian.Api.Models
         [Column("audio_file_url")]
         public string? AudioFileUrl { get; set; }
 
+        [Column("audio_data")]
+        public byte[]? AudioData { get; set; }
+
+        [Column("dialog_data")]
+        public string? DialogData { get; set; }
+
         [Column("status")]
         public AlertStatus Status { get; set; } = AlertStatus.pending;
 
@@ -162,6 +205,15 @@ namespace SchoolGuardian.Api.Models
 
         [Column("is_evidence")]
         public bool IsEvidence { get; set; } = false;
+
+        [Column("transcript")]
+        public string? Transcript { get; set; }
+
+        [Column("keywords")]
+        public string? Keywords { get; set; }
+
+        [Column("timestamp_seconds")]
+        public double? TimestampSeconds { get; set; }
 
         [ForeignKey("DeviceId")]
         public Device Device { get; set; }

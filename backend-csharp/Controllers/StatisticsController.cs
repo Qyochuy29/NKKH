@@ -1,3 +1,4 @@
+using SchoolGuardian.Api.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SchoolGuardian.Api.Services;
@@ -12,64 +13,36 @@ namespace SchoolGuardian.Api.Controllers
         private readonly StatisticsService _svc;
         public StatisticsController(StatisticsService svc) => _svc = svc;
 
+        // Dùng extension method thay vì lặp lại FindFirst(...) mỗi action (Fix #10)
+        private string? Role   => User.GetUserRole();
+        private string? UserId => User.GetUserId();
+
         [HttpGet("summary")]
         public async Task<IActionResult> GetSummary()
-        {
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-            return Ok(await _svc.GetSummary(role, userId));
-        }
+            => Ok(await _svc.GetSummary(Role, UserId));
 
         [HttpGet("by-type")]
         public async Task<IActionResult> GetByType()
-        {
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-            return Ok(await _svc.GetByType(role, userId));
-        }
+            => Ok(await _svc.GetByType(Role, UserId));
 
         [HttpGet("by-area")]
         public async Task<IActionResult> GetByArea()
-        {
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-            return Ok(await _svc.GetByArea(role, userId));
-        }
+            => Ok(await _svc.GetByArea(Role, UserId));
 
         [HttpGet("trend")]
         public async Task<IActionResult> GetTrend([FromQuery] string period = "day")
-        {
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-            return Ok(await _svc.GetTrend(period, role, userId));
-        }
+            => Ok(await _svc.GetTrend(period, Role, UserId));
 
         [HttpGet("heatmap")]
         public async Task<IActionResult> GetHeatmap()
-        {
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-            return Ok(await _svc.GetHeatmap(role, userId));
-        }
+            => Ok(await _svc.GetHeatmap(Role, UserId));
 
         [HttpGet("ratio")]
         public async Task<IActionResult> GetRatio()
-        {
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-            return Ok(await _svc.GetAlertRatio(role, userId));
-        }
+            => Ok(await _svc.GetAlertRatio(Role, UserId));
 
         [HttpGet("hourly-today")]
         public async Task<IActionResult> GetHourlyToday()
-        {
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? User.FindFirst("role")?.Value;
-            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("sub")?.Value;
-            return Ok(await _svc.GetHourlyToday(role, userId));
-        }
-
-        [AllowAnonymous]
-        [HttpGet("hourly-today-test")]
-        public async Task<IActionResult> GetHourlyTodayTest() => Ok(await _svc.GetHourlyToday("admin", null));
+            => Ok(await _svc.GetHourlyToday(Role, UserId));
     }
 }

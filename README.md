@@ -91,7 +91,7 @@ Nếu bạn muốn chạy server AI để tiện debug và test âm thanh:
 cd ai-training
 
 # Cài đặt các thư viện (yêu cầu Python 3.10+)
-pip install flask tensorflow tensorflow_hub librosa pydub SpeechRecognition
+pip install flask tensorflow tensorflow_hub librosa pydub openai-whisper setuptools-rust
 
 # Khởi chạy server AI
 python server.py
