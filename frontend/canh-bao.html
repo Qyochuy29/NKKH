@@ -59,6 +59,17 @@
     <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
   </div>
 
+  <!-- Dialog Modal -->
+  <div id="dialog-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center; padding: 20px;">
+    <div style="background:white; border-radius:12px; width:100%; max-width:600px; max-height:85vh; display:flex; flex-direction:column; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+      <div style="padding:16px 20px; border-bottom:1px solid #e5e7eb; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:18px; font-weight:700; color:#111827;">Chi tiết AI phân tích</h3>
+        <button onclick="document.getElementById('dialog-modal').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:#6b7280; padding:0; line-height:1;">&times;</button>
+      </div>
+      <div id="dialog-modal-body" style="padding:20px; overflow-y:auto; flex:1;"></div>
+    </div>
+  </div>
+
   <script src="./dung-chung.js?v=7"></script>
   <script src="./canh-bao.js?v=7"></script>
 </body>

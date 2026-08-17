@@ -176,7 +176,7 @@ namespace SchoolGuardian.Api.DTOs
         public string? Status    { get; set; }
 
         [Range(0, int.MaxValue)] public int Offset { get; set; } = 0;
-        [Range(1, 100, ErrorMessage = "Limit phải từ 1 đến 100")] public int Limit { get; set; } = 20;
+        [Range(1, 1000, ErrorMessage = "Limit phải từ 1 đến 1000")] public int Limit { get; set; } = 20;
     }
 
     // ============================================================
