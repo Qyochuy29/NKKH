@@ -62,7 +62,7 @@ EMERGENCY_WORDS = [
     'cấp cứu', 'bệnh viện', 'xe thương', 'chảy máu', 'gãy xương', 'ngất',
     'đột quỵ', 'hộc máu', 'thở không được', 'ép tim',
     'cháy', 'nổ', 'sập', 'ngập', 'lụt', 'chìm', 'kẹt', 'ngạt khói',
-    'phá cửa'
+    'phá cửa', 'xin tha', 'đừng đánh', 'tha cho em', 'tha cho tao', 'van xin', 'lạy lục'
 ]
 
 app = Flask(__name__)
@@ -119,7 +119,7 @@ def get_whisper_waveform(audio_segment):
     max_val = float(2**(8 * audio.sample_width - 1))
     return samples / max_val
 
-DANGEROUS_YAMNET_CLASSES = [22, 23, 26, 42, 43, 44]
+DANGEROUS_YAMNET_CLASSES = [10, 20, 22, 23, 26, 42, 43, 44, 461, 463]
 
 def classify_audio(audio_data):
     try:
@@ -137,18 +137,23 @@ def classify_audio(audio_data):
             if max_scores[c] > scream_score:
                 scream_score = max_scores[c]
                 
+        scream_timestamps = []
+        for i, frame in enumerate(scores_np):
+            if any(frame[c] > CONFIDENCE_THRESHOLD for c in DANGEROUS_YAMNET_CLASSES):
+                scream_timestamps.append(i * 0.48)
+                
         speech_score = max_scores[0]
         
         if scream_score > CONFIDENCE_THRESHOLD:
-            return 'scream', float(scream_score)
+            return 'scream', float(scream_score), scream_timestamps
         else:
             if speech_score < 0.1:
-                return 'unknown', float(speech_score)
-            return 'argument', float(speech_score)
+                return 'unknown', float(speech_score), scream_timestamps
+            return 'argument', float(speech_score), scream_timestamps
             
     except Exception as e:
         print(f"Lỗi YAMNet: {e}")
-        return 'argument', 0.1
+        return 'argument', 0.1, []
 
 def decide_final_class(model_class_code, confidence, has_vulgarity, is_threat, is_emergency):
     mapped_class = model_class_code
@@ -332,7 +337,7 @@ def analyze_full():
         total_emergency = 0
         has_scream = False
         
-        predicted_class, conf = classify_audio(audio)
+        predicted_class, conf, scream_timestamps = classify_audio(audio)
         if predicted_class == 'scream' and conf >= CONFIDENCE_THRESHOLD:
             has_scream = True
         
@@ -423,13 +428,37 @@ def analyze_full():
         if is_valid_alert:
             problematic_dialogues = [d for d in dialogue if d.get('has_vulgarity') or d.get('is_threat') or d.get('is_emergency')]
             
-            if not problematic_dialogues:
-                # If there are no specific problematic dialogues (e.g. only scream detected)
-                start_s = 0
-                end_s = min(total_duration_ms / 1000, 10)
+            buckets = {}
+            for t in scream_timestamps:
+                b = int(t // 10)
+                if b not in buckets: buckets[b] = set()
+                buckets[b].add('scream')
+                
+            for pd in problematic_dialogues:
+                center_s = (pd['start_time'] + pd['end_time']) / 2
+                b = int(center_s // 10)
+                if b not in buckets: buckets[b] = set()
+                
+                pd_type = 'argument'
+                if pd.get('is_emergency'): pd_type = 'help'
+                elif pd.get('is_threat'): pd_type = 'threat'
+                elif has_scream: pd_type = 'scream'
+                buckets[b].add(pd_type)
+                
+            if not buckets:
+                buckets[0] = {final_class}
+                
+            for b, types in buckets.items():
+                start_s = b * 10
+                end_s = min(total_duration_ms / 1000, start_s + 10)
+                
+                bucket_type = 'argument'
+                if 'help' in types: bucket_type = 'help'
+                elif 'scream' in types: bucket_type = 'scream'
+                elif 'threat' in types: bucket_type = 'threat'
+                
                 start_ms = int(start_s * 1000)
                 end_ms = int(end_s * 1000)
-                
                 audio_snippet = censored_full_audio[start_ms:end_ms]
                 
                 alert_filename = f"alert_10s_{uuid.uuid4().hex[:8]}.wav"
@@ -439,55 +468,19 @@ def analyze_full():
                 except Exception as e:
                     print(f"Lỗi khi export alert 10s audio: {e}")
                     
+                bucket_transcripts = [d['text'] for d in dialogue if start_s <= d['start_time'] <= end_s or start_s <= d['end_time'] <= end_s]
+                
                 alerts_found.append({
                     "start_time_seconds": start_s,
                     "end_time_seconds": end_s,
                     "filename": alert_filename,
-                    "soundType": final_class,
+                    "soundType": bucket_type,
                     "confidence": probability,
-                    "transcript": " ".join([d['text'] for d in dialogue]),
+                    "transcript": " ".join(bucket_transcripts) if bucket_transcripts else "",
                     "has_vulgarity": total_vulgarity > 0,
                     "is_threat": total_threats > 0,
                     "is_emergency": total_emergency > 0
                 })
-            else:
-                # Create an alert for each problematic dialogue
-                for pd in problematic_dialogues:
-                    center_s = (pd['start_time'] + pd['end_time']) / 2
-                    start_s = max(0, center_s - 5)
-                    end_s = min(total_duration_ms / 1000, start_s + 10)
-                    if end_s - start_s < 10:
-                        start_s = max(0, end_s - 10)
-                    
-                    start_ms = int(start_s * 1000)
-                    end_ms = int(end_s * 1000)
-                    
-                    audio_snippet = censored_full_audio[start_ms:end_ms]
-                    
-                    alert_filename = f"alert_10s_{uuid.uuid4().hex[:8]}.wav"
-                    alert_filepath = os.path.join(UPLOAD_DIR, alert_filename)
-                    try:
-                        audio_snippet.export(alert_filepath, format="wav")
-                    except Exception as e:
-                        print(f"Lỗi khi export alert 10s audio: {e}")
-                    
-                    # Determine sound type for this specific dialogue
-                    pd_type = 'argument'
-                    if pd.get('is_emergency'): pd_type = 'help'
-                    elif pd.get('is_threat'): pd_type = 'threat'
-                    elif has_scream: pd_type = 'scream'
-                        
-                    alerts_found.append({
-                        "start_time_seconds": start_s,
-                        "end_time_seconds": end_s,
-                        "filename": alert_filename,
-                        "soundType": pd_type,
-                        "confidence": probability,
-                        "transcript": pd['text'],
-                        "has_vulgarity": pd.get('has_vulgarity', False),
-                        "is_threat": pd.get('is_threat', False),
-                        "is_emergency": pd.get('is_emergency', False)
-                    })
             
         return jsonify({
             "status": "success",
