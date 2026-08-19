@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "VZgXo+wAsp0=",
+  "dgSpecHash": "NeQi/dMjQMo=",
   "success": true,
-  "projectFilePath": "C:\\website\\web\\backend-csharp\\SchoolGuardian.Api.csproj",
+  "projectFilePath": "c:\\website\\web\\backend-csharp\\SchoolGuardian.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\admin\\.nuget\\packages\\bcrypt.net-next\\4.2.0\\bcrypt.net-next.4.2.0.nupkg.sha512",
     "C:\\Users\\admin\\.nuget\\packages\\firebaseadmin\\3.6.0\\firebaseadmin.3.6.0.nupkg.sha512",

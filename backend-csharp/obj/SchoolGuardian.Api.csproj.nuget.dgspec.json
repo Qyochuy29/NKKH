@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\website\\web\\backend-csharp\\SchoolGuardian.Api.csproj": {}
+    "c:\\website\\web\\backend-csharp\\SchoolGuardian.Api.csproj": {}
   },
   "projects": {
-    "C:\\website\\web\\backend-csharp\\SchoolGuardian.Api.csproj": {
+    "c:\\website\\web\\backend-csharp\\SchoolGuardian.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\website\\web\\backend-csharp\\SchoolGuardian.Api.csproj",
+        "projectUniqueName": "c:\\website\\web\\backend-csharp\\SchoolGuardian.Api.csproj",
         "projectName": "SchoolGuardian.Api",
-        "projectPath": "C:\\website\\web\\backend-csharp\\SchoolGuardian.Api.csproj",
+        "projectPath": "c:\\website\\web\\backend-csharp\\SchoolGuardian.Api.csproj",
         "packagesPath": "C:\\Users\\admin\\.nuget\\packages\\",
-        "outputPath": "C:\\website\\web\\backend-csharp\\obj\\",
+        "outputPath": "c:\\website\\web\\backend-csharp\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

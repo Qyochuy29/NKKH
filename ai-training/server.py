@@ -1,5 +1,14 @@
 import os
 import sys
+import site
+
+# Fix: Tự động nạp thư viện DLL của NVIDIA từ pip packages cho Windows
+for sp in site.getsitepackages() + [site.getusersitepackages()]:
+    for module in ["cublas", "cudnn", "cuda_nvrtc"]:
+        dll_path = os.path.join(sp, "nvidia", module, "bin")
+        if os.path.exists(dll_path):
+            os.add_dll_directory(dll_path)
+
 sys.stdout.reconfigure(encoding='utf-8')
 
 # Thêm đường dẫn FFMPEG vào PATH để pydub không bị lỗi WinError 2
@@ -12,6 +21,15 @@ import uuid
 import tempfile
 import numpy as np
 import tensorflow as tf
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        print(e)
+
 import tensorflow_hub as hub
 import librosa
 from pydub import AudioSegment
@@ -77,7 +95,7 @@ except Exception as e:
 
 print("Đang tải Faster Whisper Model...")
 try:
-    whisper_model = WhisperModel("large-v3", device="cpu", compute_type="int8")
+    whisper_model = WhisperModel("large-v3", device="cuda", compute_type="int8_float16")
     print("✅ Đã tải xong WhisperModel!")
 except Exception as e:
     print(f"⚠️ Lỗi tải Whisper: {e}")
@@ -270,8 +288,20 @@ def predict():
 
         try:
             waveform = get_whisper_waveform(audio)
-            segments, _ = whisper_model.transcribe(waveform, language="vi", word_timestamps=True, vad_filter=True, vad_parameters=dict(min_silence_duration_ms=500))
+            segments, _ = whisper_model.transcribe(
+                waveform, 
+                language="vi", 
+                word_timestamps=True, 
+                vad_filter=True, 
+                vad_parameters=dict(min_silence_duration_ms=500),
+                condition_on_previous_text=False,
+                no_speech_threshold=0.4
+            )
             for segment in segments:
+                # Xoá các câu "ảo giác" phổ biến của Whisper do data Youtube
+                lower_text = segment.text.lower()
+                if "subscribe" in lower_text or "ghiền mì gõ" in lower_text or "theo dõi kênh" in lower_text or "cảm ơn các bạn" in lower_text:
+                    continue
                 transcript += segment.text
                 whisper_words.extend(segment.words)
             
@@ -358,9 +388,14 @@ def analyze_full():
                     word_timestamps=True, 
                     vad_filter=True, 
                     vad_parameters=dict(min_silence_duration_ms=500),
+                    condition_on_previous_text=False,
+                    no_speech_threshold=0.4,
                     initial_prompt=prompt
                 )
                 for segment in segments:
+                    lower_text = segment.text.lower()
+                    if "subscribe" in lower_text or "ghiền mì gõ" in lower_text or "theo dõi kênh" in lower_text or "cảm ơn các bạn" in lower_text:
+                        continue
                     transcript += segment.text
                     whisper_words.extend(segment.words)
                 
