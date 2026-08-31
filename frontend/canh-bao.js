@@ -156,14 +156,17 @@
       
       return `${icon} ${text}`;
     }
+      const confidence = Math.max(10, Math.min(95, Number(a.confidence_score) || 10));
+      const confidenceLabel = getConfidenceLabel(confidence);
       return `
       <div class="alert-card ${getSeverityClass(a.confidence_score)}" id="alert-${a.id}">
 
         <div class="alert-card-header">
           <span class="alert-card-type">
             ${type.icon} ${type.label}
-            <span class="confidence-bar"><span class="confidence-bar-fill" style="width:${a.confidence_score}%;background:${getConfidenceColor(a.confidence_score)}"></span></span>
-            <strong>${a.confidence_score.toFixed(0)}%</strong>
+            <span class="confidence-bar"><span class="confidence-bar-fill" style="width:${confidence}%;background:${getConfidenceColor(confidence)}"></span></span>
+            <strong>${confidence.toFixed(0)}%</strong>
+            <small style="font-weight:600;color:${getConfidenceColor(confidence)}">${confidenceLabel}</small>
           </span>
           <span class="badge ${status.class}">${status.label}</span>
         </div>

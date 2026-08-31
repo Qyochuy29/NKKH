@@ -50,6 +50,147 @@ namespace SchoolGuardian.Api.Controllers
             return Ok(await _svc.SubmitDetection(dto.DeviceId, dto.SoundType, dto.ConfidenceScore, dto.AudioFileUrl));
         }
 
+        [AllowAnonymous]
+        [HttpPost("device-recording")]
+        [RequestSizeLimit(2 * 1024 * 1024)]
+        public async Task<IActionResult> UploadDeviceRecording(
+            [FromQuery(Name = "device_id")] string deviceId,
+            [FromQuery(Name = "type")] string eventType,
+            [FromQuery] double confidence,
+            [FromQuery(Name = "event_id")] string? eventId,
+            [FromServices] IConfiguration config,
+            [FromServices] ApplicationDbContext db)
+        {
+            var token = Request.Headers["X-Device-Token"].FirstOrDefault();
+            if (string.IsNullOrEmpty(token) || token != config["DeviceToken"])
+                return Unauthorized(new { message = "Invalid Device Token" });
+
+            var normalizedEventType = eventType.Trim().ToLowerInvariant();
+            var soundType = normalizedEventType switch
+            {
+                "analyze" => "analyze",
+                "khoc" => "scream",
+                "dap_pha" => "threat",
+                "scream" => "scream",
+                "help" => "help",
+                "threat" => "threat",
+                "argument" => "argument",
+                _ => null
+            };
+
+            if (soundType == null)
+                return BadRequest(new { message = "Unsupported event type" });
+
+            var device = await db.Devices.FirstOrDefaultAsync(d =>
+                d.Id == deviceId || d.Name == deviceId);
+            device ??= await db.Devices.FirstOrDefaultAsync();
+
+            if (device == null)
+                return BadRequest(new { message = "No device exists on the website" });
+
+            var safeEventId = string.IsNullOrWhiteSpace(eventId)
+                ? Guid.NewGuid().ToString("N")
+                : new string(eventId
+                    .Where(c => char.IsLetterOrDigit(c) || c is '-' or '_')
+                    .Take(96)
+                    .ToArray());
+
+            if (string.IsNullOrEmpty(safeEventId))
+                safeEventId = Guid.NewGuid().ToString("N");
+
+            var fileName = $"{safeEventId}_{normalizedEventType}.wav";
+            var audioUrl = $"/uploads/{fileName}";
+            var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+            Directory.CreateDirectory(uploadsDir);
+            var analysisMarker = Path.Combine(uploadsDir, $"{safeEventId}.analyzed");
+
+            if (normalizedEventType == "analyze" && System.IO.File.Exists(analysisMarker))
+            {
+                return Ok(new
+                {
+                    success = true,
+                    duplicate = true,
+                    analyzed = true,
+                    file = fileName
+                });
+            }
+
+            var existing = normalizedEventType == "analyze"
+                ? null
+                : await db.Alerts.FirstOrDefaultAsync(a => a.AudioFileUrl == audioUrl);
+            if (existing != null)
+            {
+                return Ok(new
+                {
+                    success = true,
+                    duplicate = true,
+                    alert_id = existing.Id,
+                    file = fileName
+                });
+            }
+
+            using var buffer = new MemoryStream();
+            await Request.Body.CopyToAsync(buffer, HttpContext.RequestAborted);
+            var audioBytes = buffer.ToArray();
+
+            if (audioBytes.Length < 44 || audioBytes.Length > 2 * 1024 * 1024)
+                return BadRequest(new { message = "Invalid WAV size" });
+
+            if (System.Text.Encoding.ASCII.GetString(audioBytes, 0, 4) != "RIFF" ||
+                System.Text.Encoding.ASCII.GetString(audioBytes, 8, 4) != "WAVE")
+                return BadRequest(new { message = "Body must be a WAV file" });
+
+            await System.IO.File.WriteAllBytesAsync(
+                Path.Combine(uploadsDir, fileName),
+                audioBytes,
+                HttpContext.RequestAborted);
+
+            if (normalizedEventType == "analyze")
+            {
+                var analysis = await _svc.AnalyzeUploadedAudio(
+                    audioUrl,
+                    fileName,
+                    device.Id);
+
+                await System.IO.File.WriteAllTextAsync(
+                    analysisMarker,
+                    DateTime.UtcNow.ToString("O"),
+                    CancellationToken.None);
+
+                return Ok(new
+                {
+                    success = true,
+                    local_saved = true,
+                    analyzed = true,
+                    file = fileName,
+                    analysis
+                });
+            }
+
+            var confidencePercent = Math.Clamp(
+                confidence <= 1.0 ? confidence * 100.0 : confidence,
+                0.0,
+                100.0);
+
+            var alert = await _svc.SubmitDetection(
+                device.Id,
+                soundType,
+                confidencePercent,
+                audioUrl,
+                $"ESP32 nhận diện: {eventType}",
+                audioBytes);
+
+            return Ok(new
+            {
+                success = true,
+                local_saved = true,
+                event_type = eventType,
+                website_sound_type = soundType,
+                file = fileName,
+                alert
+            });
+        }
+
         [HttpPost("upload")]
         [AllowAnonymous]
         public async Task<IActionResult> UploadAudio(IFormFile? audio, [FromServices] IConfiguration config)

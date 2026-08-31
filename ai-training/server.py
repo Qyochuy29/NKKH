@@ -54,7 +54,7 @@ PROFANITY_WORDS = [
     'cái lồn', 'con phò', 'điếm', 'đĩ', 'chó má', 'súc vật',
     'con cụ', 'tổ sư cha', 'mất dạy', 'con hoang', 'con chó', 'địt mẹ mày',
     'loại vô học', 'nhờn lồn', 'nhờn mặt', 'mặt lồn', 'rác rưởi', 'nứng',
-    'hãm lồn', 'rẻ rách'
+    'hãm lồn', 'rẻ rách', 'tục tĩu', 'chửi thề', 'đồ ngu', 'ngu ngốc'
 ]
 
 THREAT_PHRASES = [
@@ -80,7 +80,8 @@ EMERGENCY_WORDS = [
     'cấp cứu', 'bệnh viện', 'xe thương', 'chảy máu', 'gãy xương', 'ngất',
     'đột quỵ', 'hộc máu', 'thở không được', 'ép tim',
     'cháy', 'nổ', 'sập', 'ngập', 'lụt', 'chìm', 'kẹt', 'ngạt khói',
-    'phá cửa', 'xin tha', 'đừng đánh', 'tha cho em', 'tha cho tao', 'van xin', 'lạy lục'
+    'phá cửa', 'xin tha', 'đừng đánh', 'tha cho em', 'tha cho tao', 'van xin', 'lạy lục',
+    'đừng mà', 'đau quá', 'mẹ ơi', 'cứu con với', 'đừng đánh nữa', 'chết mất', 'huhu', 'làm ơn', 'tha lỗi'
 ]
 
 app = Flask(__name__)
@@ -162,7 +163,7 @@ def classify_audio(audio_data):
                 
         speech_score = max_scores[0]
         
-        if scream_score > CONFIDENCE_THRESHOLD:
+        if scream_score > 0.3:
             return 'scream', float(scream_score), scream_timestamps
         else:
             if speech_score < 0.1:
@@ -182,7 +183,7 @@ def decide_final_class(model_class_code, confidence, has_vulgarity, is_threat, i
         final_class = 'help'
     elif is_threat:
         final_class = 'threat'
-    elif mapped_class == 'scream' and model_confident:
+    elif mapped_class == 'scream' and confidence >= 0.3:
         final_class = 'scream'
     elif has_vulgarity:
         final_class = 'argument'
@@ -294,8 +295,7 @@ def predict():
                 word_timestamps=True, 
                 vad_filter=True, 
                 vad_parameters=dict(min_silence_duration_ms=500),
-                condition_on_previous_text=False,
-                no_speech_threshold=0.4
+                condition_on_previous_text=False
             )
             for segment in segments:
                 # Xoá các câu "ảo giác" phổ biến của Whisper do data Youtube
@@ -381,7 +381,7 @@ def analyze_full():
             transcript = ""
             try:
                 waveform = get_whisper_waveform(chunk)
-                prompt = "Đây là cuộc cãi vã có chửi bới: địt mẹ mày, cái lồn, chó đẻ, đụ má, con đĩ."
+                prompt = "Đây là đoạn hội thoại khẩn cấp, có người đang khóc lóc, van xin: cứu tôi với, đừng đánh nữa, đau quá, xin tha cho em. Hoặc có chửi bới: địt mẹ mày, cái lồn, chó đẻ."
                 segments, _ = whisper_model.transcribe(
                     waveform, 
                     language="vi", 
@@ -389,7 +389,6 @@ def analyze_full():
                     vad_filter=True, 
                     vad_parameters=dict(min_silence_duration_ms=500),
                     condition_on_previous_text=False,
-                    no_speech_threshold=0.4,
                     initial_prompt=prompt
                 )
                 for segment in segments:

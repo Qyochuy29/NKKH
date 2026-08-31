@@ -1,3 +1,4 @@
+
 """
 WebSocket server nhận audio PCM thô từ ESP32 (INMP441) và lưu thành file .wav.
 
@@ -39,8 +40,9 @@ import filter as audio_filter
 class Config:
     host: str = "0.0.0.0"
     port: int = 8765
-    output_dir: Path = Path("../tai-lieu")
+    output_dir: Path = Path(__file__).parent.parent / "tai-lieu"
     backend_url: str = "http://localhost:3000/api/alerts/analyze-existing"
+    device_token: str = "your_secure_device_token_123"
     log_level: int = logging.INFO
     # In thống kê (min/max/mean) mỗi N gói tin thay vì mỗi gói (tránh spam console)
     stats_log_interval: int = 200
@@ -50,7 +52,7 @@ class Config:
     #   "off"     = chỉ loại DC-offset, giữ nguyên tất cả (không khử nhiễu)
     #   "denoise" = cắt tiếng quạt (rumble thấp) + hiss/rè (nhiễu ổn định),
     #               giữ nguyên âm thanh to đột ngột (súng, vỡ, hét...)
-    denoise_mode: str = "denoise"
+    denoise_mode: str = "off"
     # Các tham số sau CHỈ áp dụng khi denoise_mode="denoise":
     denoise_alpha: float = 1.5
     denoise_beta: float = 0.08
@@ -180,11 +182,14 @@ class AudioRecorder:
 
     def _trigger_ai_analysis(self) -> None:
         try:
-            req_data = json.dumps({"FileName": self.wav_path.name}).encode('utf-8')
+            req_data = json.dumps({"file_name": self.wav_path.name}).encode('utf-8')
             req = urllib.request.Request(
                 CONFIG.backend_url,
                 data=req_data,
-                headers={'Content-Type': 'application/json'}
+                headers={
+                    'Content-Type': 'application/json',
+                    'X-Device-Token': CONFIG.device_token
+                }
             )
             logger.info("Dang gui yeu cau phan tich cho %s toi Backend...", self.wav_path.name)
             

@@ -1,0 +1,12 @@
+{
+  "device_id": 1,
+  "sample_rate": 16000,
+  "bit_depth": 16,
+  "channels": 1,
+  "start_time": "2026-08-30T08:12:16.457230+00:00",
+  "end_time": "2026-08-30T08:26:04.298580+00:00",
+  "duration_sec": 401.168,
+  "packet_count": 1552,
+  "bytes_written": 12837376,
+  "wav_file": "device1_20260830_081216.wav"
+}

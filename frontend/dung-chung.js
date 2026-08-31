@@ -461,6 +461,13 @@ function getConfidenceColor(confidence) {
   return 'var(--caution)';
 }
 
+function getConfidenceLabel(confidence) {
+  if (confidence >= 85) return 'Rất cao';
+  if (confidence >= 70) return 'Cao';
+  if (confidence >= 40) return 'Trung bình';
+  return 'Thấp';
+}
+
 /* ========== PAGINATION ========== */
 window.renderPagination = function(totalItems, itemsPerPage, currentPage, containerId, onPageChange) {
   const container = document.getElementById(containerId);

@@ -162,13 +162,31 @@ namespace SchoolGuardian.Api.Services
             return alertDto;
         }
 
-        public async Task<object> AnalyzeUploadedAudio(string audioUrl, string originalName = "")
+        public async Task<object> AnalyzeUploadedAudio(
+            string audioUrl,
+            string originalName = "",
+            string? preferredDeviceId = null)
         {
-            var devices = await _db.Devices.Where(d => d.Status == DeviceStatus.online).ToListAsync();
-            var device = devices.Count > 0
-                ? devices[Random.Shared.Next(devices.Count)]
-                : await _db.Devices.FirstOrDefaultAsync()
-                ?? throw new Exception("No devices available to bind alert");
+            Device? device = null;
+
+            if (!string.IsNullOrWhiteSpace(preferredDeviceId))
+            {
+                device = await _db.Devices.FirstOrDefaultAsync(d =>
+                    d.Id == preferredDeviceId || d.Name == preferredDeviceId);
+            }
+
+            if (device == null)
+            {
+                var devices = await _db.Devices
+                    .Where(d => d.Status == DeviceStatus.online)
+                    .ToListAsync();
+                device = devices.Count > 0
+                    ? devices[Random.Shared.Next(devices.Count)]
+                    : await _db.Devices.FirstOrDefaultAsync();
+            }
+
+            if (device == null)
+                throw new Exception("No devices available to bind alert");
 
             var createdAlerts = new List<object>();
 
