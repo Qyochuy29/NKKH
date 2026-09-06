@@ -223,8 +223,10 @@
 
       const prob = dialogDataObj?.violence_probability ?? null;
       const scream = dialogDataObj?.has_scream ?? false;
+      const crying = dialogDataObj?.has_crying ?? false;
       const threats = dialogDataObj?.threats_count ?? 0;
       const vulgarity = dialogDataObj?.vulgarity_count ?? 0;
+      const emergency = dialogDataObj?.emergency_count ?? 0;
 
       if (dialogue.length === 0) {
         modalBody.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-secondary)"><i class="bi bi-chat-x" style="font-size:32px"></i><p style="margin-top:12px">Không có dữ liệu đối thoại cho cảnh báo này.</p></div>';
@@ -236,7 +238,9 @@
         const probColor = prob >= 70 ? 'var(--danger)' : prob >= 40 ? '#f59e0b' : '#10b981';
         statsHtml = `<div style="display:flex;gap:16px;flex-wrap:wrap;padding:12px 16px;background:rgba(239,68,68,0.07);border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:600;">
           <span><i class="bi bi-exclamation-triangle-fill" style="color:${probColor}"></i> Tỉ lệ bạo lực: <strong style="color:${probColor};font-size:16px">${prob.toFixed(0)}%</strong></span>
-          ${scream ? '<span><i class="bi bi-volume-up-fill text-danger"></i> Có tiếng la hét</span>' : ''}
+          ${scream ? '<span><i class="bi bi-volume-up-fill text-danger"></i> Có tiếng gào thét</span>' : ''}
+          ${crying ? '<span><i class="bi bi-emoji-tear-fill text-warning"></i> Có tiếng khóc lóc</span>' : ''}
+          ${emergency > 0 ? `<span><i class="bi bi-person-arms-up text-danger"></i> Kêu cứu / Van xin: ${emergency}</span>` : ''}
           ${threats > 0 ? `<span><i class="bi bi-shield-x-fill text-danger"></i> Lời đe dọa: ${threats}</span>` : ''}
           ${vulgarity > 0 ? `<span><i class="bi bi-chat-x-fill text-warning"></i> Chửi thề: ${vulgarity}</span>` : ''}
         </div>`;

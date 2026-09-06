@@ -58,6 +58,7 @@ namespace SchoolGuardian.Api.Controllers
             [FromQuery(Name = "type")] string eventType,
             [FromQuery] double confidence,
             [FromQuery(Name = "event_id")] string? eventId,
+            [FromQuery(Name = "edge_class")] string? edgeClass,
             [FromServices] IConfiguration config,
             [FromServices] ApplicationDbContext db)
         {
@@ -150,7 +151,9 @@ namespace SchoolGuardian.Api.Controllers
                 var analysis = await _svc.AnalyzeUploadedAudio(
                     audioUrl,
                     fileName,
-                    device.Id);
+                    device.Id,
+                    edgeClass,
+                    confidence);
 
                 await System.IO.File.WriteAllTextAsync(
                     analysisMarker,
@@ -166,6 +169,7 @@ namespace SchoolGuardian.Api.Controllers
                     analysis
                 });
             }
+
 
             var confidencePercent = Math.Clamp(
                 confidence <= 1.0 ? confidence * 100.0 : confidence,

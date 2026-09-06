@@ -3,17 +3,21 @@ import sys
 import site
 
 # Fix: Tự động nạp thư viện DLL của NVIDIA từ pip packages cho Windows
-for sp in site.getsitepackages() + [site.getusersitepackages()]:
-    for module in ["cublas", "cudnn", "cuda_nvrtc"]:
-        dll_path = os.path.join(sp, "nvidia", module, "bin")
-        if os.path.exists(dll_path):
-            os.add_dll_directory(dll_path)
+if hasattr(os, "add_dll_directory"):
+    for sp in site.getsitepackages() + [site.getusersitepackages()]:
+        for module in ["cublas", "cudnn", "cuda_nvrtc"]:
+            dll_path = os.path.join(sp, "nvidia", module, "bin")
+            if os.path.exists(dll_path):
+                try:
+                    os.add_dll_directory(dll_path)
+                except Exception:
+                    pass
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-# Thêm đường dẫn FFMPEG vào PATH để pydub không bị lỗi WinError 2
+# Thêm đường dẫn FFMPEG vào PATH nếu có trên Windows
 ffmpeg_path = r"C:\Users\admin\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1.2-full_build\bin"
-if ffmpeg_path not in os.environ["PATH"]:
+if os.path.exists(ffmpeg_path) and ffmpeg_path not in os.environ.get("PATH", ""):
     os.environ["PATH"] += os.pathsep + ffmpeg_path
 
 import re
@@ -33,33 +37,33 @@ if gpus:
 import tensorflow_hub as hub
 import librosa
 from pydub import AudioSegment
-from pydub.generators import Sine
-from pydub.silence import detect_nonsilent
 from flask import Flask, request, jsonify
 from faster_whisper import WhisperModel
 import unicodedata
-import difflib
+
+# Import các helper đã được tối ưu hóa chuẩn xác cho tiếng Việt
+from transcription import (
+    get_whisper_waveform,
+    transcribe_vietnamese,
+    censor_audio_and_text,
+    DEFAULT_PROFANITY_WORDS,
+)
 
 # ============================================================
 # THƯ MỤC AUDIO ĐƯỢC PHÉP ĐỌC
 # ============================================================
-UPLOAD_DIR = os.path.abspath("../tai-lieu")
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.abspath("../tai-lieu"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 MAX_FILE_SIZE_MB = 20
 CONFIDENCE_THRESHOLD = 0.55
 
-PROFANITY_WORDS = [
-    'địt', 'đụ', 'lồn', 'lôn', 'cặc', 'buồi', 'đĩ', 'phò', 'đéo', 'đm', 'đmm', 'vcl', 'vl', 'đcm',
-    'địt mẹ', 'đờ mờ', 'dm', 'đmm', 'con mẹ mày', 'đb', 'đầu buồi', 'đầu cu',
-    'cái lồn', 'con phò', 'điếm', 'đĩ', 'chó má', 'súc vật',
-    'con cụ', 'tổ sư cha', 'mất dạy', 'con hoang', 'con chó', 'địt mẹ mày',
-    'loại vô học', 'nhờn lồn', 'nhờn mặt', 'mặt lồn', 'rác rưởi', 'nứng',
-    'hãm lồn', 'rẻ rách', 'tục tĩu', 'chửi thề', 'đồ ngu', 'ngu ngốc'
-]
+PROFANITY_WORDS = DEFAULT_PROFANITY_WORDS
 
 THREAT_PHRASES = [
     'thích chết', 'ăn đấm', 'chán sống', 'xanh cỏ',
-    'câm cái mồm', 'nín ngay', 'vả vỡ mồm', 'sủa tiếp', 'tuổi lồn',
+    'câm cái mồm', 'câm mồm', 'câm họng', 'nín ngay', 'vả vỡ mồm', 'sủa tiếp', 'tuổi lồn',
+    'đánh vỡ mồm', 'đập vỡ mồm', 'vỡ mồm', 'đánh chết', 'chết mẹ mày', 'chết cha mày',
+    'nhờn với mày', 'nhờn với bố', 'nhờn với tao', 'nhợn với', 'tuổi lồn sánh vai',
     'ngon thì', 'nhào vô', 'bước ra', 'đụng vào tao', 'sờ vào người',
     'gọi người', 'gọi hội', 'gọi anh em', 'bốc máy',
     'chém chết', 'xin tí huyết', 'đập gãy', 'phá nát', 'nhập viện',
@@ -74,14 +78,28 @@ SAFE_COLLOCATIONS = [
 ]
 
 EMERGENCY_WORDS = [
-    'cứu tôi', 'giúp tôi', 'cứu em', 'cứu cháu', 'ối giời ơi', 'có ai không',
-    'cứu', 'buông tao', 'thả tao', 'cướp', 'giết người', 'bỏ ra',
-    'công an', 'bảo vệ', 'có dao', 'có súng', 'nó đâm',
+    # Kêu cứu khẩn cấp
+    'cứu tôi', 'giúp tôi', 'cứu em', 'cứu cháu', 'cứu con', 'cứu tao', 'cứu với', 'có ai không',
+    'cứu', 'buông tao', 'thả tao', 'buông em', 'thả em', 'bỏ em ra', 'buông ra', 'thả ra', 'bỏ tao ra',
+    'cướp', 'giết người', 'bỏ ra', 'công an', 'bảo vệ', 'có dao', 'có súng', 'nó đâm',
     'cấp cứu', 'bệnh viện', 'xe thương', 'chảy máu', 'gãy xương', 'ngất',
     'đột quỵ', 'hộc máu', 'thở không được', 'ép tim',
-    'cháy', 'nổ', 'sập', 'ngập', 'lụt', 'chìm', 'kẹt', 'ngạt khói',
-    'phá cửa', 'xin tha', 'đừng đánh', 'tha cho em', 'tha cho tao', 'van xin', 'lạy lục',
-    'đừng mà', 'đau quá', 'mẹ ơi', 'cứu con với', 'đừng đánh nữa', 'chết mất', 'huhu', 'làm ơn', 'tha lỗi'
+    'cháy', 'nổ', 'sập', 'ngập', 'lụt', 'chìm', 'kẹt', 'ngạt khói', 'phá cửa',
+
+    # Van xin & Lạy lục (Học đường / Nạn nhân bị bạo hành)
+    'em xin anh', 'em xin chị', 'cháu xin chú', 'cháu xin cô', 'con xin ba', 'con xin mẹ', 'con xin bố',
+    'con lạy ba', 'con lạy mẹ', 'con lạy bố', 'em lạy anh', 'em lạy chị', 'lạy anh', 'lạy chị', 'lạy mày',
+    'tha cho em', 'tha cho con', 'tha cho cháu', 'tha cho mình', 'tha cho tôi', 'tha cho tao',
+    'tha em đi', 'tha cho em đi', 'tha con đi', 'tha cháu đi', 'tha em lần này', 'tha cho một lần',
+    'xin tha', 'xin tha mạng', 'tha mạng', 'van xin', 'lạy lục', 'cho em xin', 'cho con xin', 'làm ơn',
+    'đừng đánh', 'đừng đánh em', 'đừng đánh con', 'đừng đánh cháu', 'đừng đánh nữa', 'đừng đánh tao',
+    'đừng đập em', 'đừng tát em', 'đừng đá em', 'đừng bắt nạt em', 'đừng ép em', 'đừng kéo tóc',
+    'đừng mà', 'xin đừng', 'đau quá', 'đau em', 'đau em quá', 'đau con quá', 'đau quá mẹ ơi', 'đau quá anh ơi',
+    'em có làm gì đâu', 'sao lại đánh em', 'em biết lỗi rồi', 'con biết lỗi rồi', 'em xin lỗi', 'em xin lỗi mà', 'xin lỗi mà',
+    'mẹ ơi', 'cứu con với', 'bố ơi', 'ba ơi', 'chết mất', 'tha lỗi',
+
+    # Từ tượng thanh tiếng khóc & la hét
+    'hu hu', 'huhu', 'hức hức', 'hic hic', 'oa oa', 'á á', 'á á á', 'ối giời ơi', 'ối mẹ ơi', 'ối ba ơi'
 ]
 
 app = Flask(__name__)
@@ -94,12 +112,24 @@ try:
 except Exception as e:
     print(f"⚠️ Lỗi tải YAMNet: {e}")
 
-print("Đang tải Faster Whisper Model...")
+whisper_model_size = os.environ.get("WHISPER_MODEL_SIZE", "small")
+whisper_model = None
+print(f"Đang tải Faster Whisper Model ({whisper_model_size})...")
 try:
-    whisper_model = WhisperModel("large-v3", device="cuda", compute_type="int8_float16")
-    print("✅ Đã tải xong WhisperModel!")
+    whisper_model = WhisperModel(whisper_model_size, device="cuda", compute_type="int8_float16")
+    print(f"✅ Đã tải xong WhisperModel ({whisper_model_size}) trên CUDA!")
 except Exception as e:
-    print(f"⚠️ Lỗi tải Whisper: {e}")
+    print(f"ℹ️ Không dùng CUDA ({e}), tự động chuyển sang CPU...")
+    try:
+        whisper_model = WhisperModel(whisper_model_size, device="cpu", compute_type="int8")
+        print(f"✅ Đã tải xong WhisperModel ({whisper_model_size}) trên CPU!")
+    except Exception as e_cpu:
+        print(f"⚠️ Lỗi tải WhisperModel {whisper_model_size} trên CPU: {e_cpu}")
+        try:
+            whisper_model = WhisperModel("base", device="cpu", compute_type="int8")
+            print("✅ Đã tải fallback WhisperModel (base) trên CPU!")
+        except Exception as e_base:
+            print(f"❌ Không thể tải WhisperModel: {e_base}")
 
 def resolve_safe_path(filename: str):
     if not filename:
@@ -124,7 +154,7 @@ def detect_threat_weak_word(text: str, word: str) -> bool:
 
 def analyze_transcript(transcript: str):
     lower_text = transcript.lower()
-    has_vulgarity = any(contains_word(lower_text, w) for w in PROFANITY_WORDS) or '*' in lower_text
+    has_vulgarity = any(contains_word(lower_text, w) for w in PROFANITY_WORDS) or '***' in lower_text or '*' in lower_text
     is_threat = any(contains_word(lower_text, p) for p in THREAT_PHRASES)
     if not is_threat:
         weak_hits = sum(1 for w in THREAT_WEAK_WORDS if detect_threat_weak_word(lower_text, w))
@@ -132,13 +162,43 @@ def analyze_transcript(transcript: str):
     is_emergency = any(contains_word(lower_text, w) for w in EMERGENCY_WORDS)
     return has_vulgarity, is_threat, is_emergency
 
-def get_whisper_waveform(audio_segment):
-    audio = audio_segment.set_frame_rate(16000).set_channels(1)
-    samples = np.array(audio.get_array_of_samples(), dtype=np.float32)
-    max_val = float(2**(8 * audio.sample_width - 1))
-    return samples / max_val
+def save_censored_audio(censored_audio, filepath):
+    ext = os.path.splitext(filepath)[1].lstrip('.').lower()
+    fmt = ext if ext in ['mp3', 'wav', 'ogg', 'flac'] else 'wav'
+    censored_audio.export(filepath, format=fmt)
 
-DANGEROUS_YAMNET_CLASSES = [10, 20, 22, 23, 26, 42, 43, 44, 461, 463]
+# ============================================================
+# CẤU HÌNH NHÃN YAMNET CHUẨN XÁC TỪ GOOGLE AUDIOSET
+# ============================================================
+# Nhóm Gào thét / La hét
+YAMNET_SCREAM_CLASSES = [
+    6,   # Shout
+    7,   # Bellow
+    9,   # Yell
+    10,  # Children shouting
+    11,  # Screaming (Gào thét chuẩn)
+]
+
+# Nhóm Khóc lóc / Nức nở / Rên rỉ
+YAMNET_CRY_CLASSES = [
+    19,  # Crying, sobbing (Khóc nức nở chuẩn)
+    20,  # Baby cry, infant cry
+    21,  # Whimper (Thút thít)
+    22,  # Wail, moan (Kêu khóc, rên rỉ)
+    33,  # Groan (Rên rỉ đau đớn)
+    39,  # Gasp (Thở dốc / hoảng loạn)
+]
+
+# Nhóm Va đập / Đập phá
+YAMNET_IMPACT_CLASSES = [
+    460, # Bang
+    461, # Slap, smack (Cú tát)
+    462, # Whack, thwack (Cú đánh mạnh)
+    463, # Smash, crash (Đập phá)
+    464, # Breaking (Gãy vỡ)
+]
+
+DANGEROUS_YAMNET_CLASSES = YAMNET_SCREAM_CLASSES + YAMNET_CRY_CLASSES + YAMNET_IMPACT_CLASSES
 
 def classify_audio(audio_data):
     try:
@@ -151,39 +211,46 @@ def classify_audio(audio_data):
         scores_np = scores.numpy()
         max_scores = np.max(scores_np, axis=0)
         
-        scream_score = 0.0
-        for c in DANGEROUS_YAMNET_CLASSES:
-            if max_scores[c] > scream_score:
-                scream_score = max_scores[c]
-                
-        scream_timestamps = []
-        for i, frame in enumerate(scores_np):
-            if any(frame[c] > CONFIDENCE_THRESHOLD for c in DANGEROUS_YAMNET_CLASSES):
-                scream_timestamps.append(i * 0.48)
-                
-        speech_score = max_scores[0]
+        scream_score = float(max(max_scores[c] for c in YAMNET_SCREAM_CLASSES))
+        cry_score = float(max(max_scores[c] for c in YAMNET_CRY_CLASSES))
+        impact_score = float(max(max_scores[c] for c in YAMNET_IMPACT_CLASSES))
+        speech_score = float(max_scores[0])
         
-        if scream_score > 0.3:
-            return 'scream', float(scream_score), scream_timestamps
+        scream_timestamps = []
+        cry_timestamps = []
+        for i, frame in enumerate(scores_np):
+            t = round(i * 0.48, 2)
+            if any(frame[c] >= 0.25 for c in YAMNET_SCREAM_CLASSES):
+                scream_timestamps.append(t)
+            if any(frame[c] >= 0.18 for c in YAMNET_CRY_CLASSES):
+                cry_timestamps.append(t)
+                
+        # Tiếng khóc thường có biên độ nhẹ hơn tiếng hét, ngưỡng 0.18 rất nhạy
+        if cry_score >= 0.18 and cry_score >= scream_score:
+            return 'crying', cry_score, cry_timestamps, scream_timestamps
+        elif scream_score >= 0.25:
+            return 'scream', scream_score, cry_timestamps, scream_timestamps
+        elif impact_score >= 0.30:
+            return 'impact', impact_score, cry_timestamps, scream_timestamps
         else:
             if speech_score < 0.1:
-                return 'unknown', float(speech_score), scream_timestamps
-            return 'argument', float(speech_score), scream_timestamps
+                return 'unknown', speech_score, cry_timestamps, scream_timestamps
+            return 'argument', speech_score, cry_timestamps, scream_timestamps
             
     except Exception as e:
         print(f"Lỗi YAMNet: {e}")
-        return 'argument', 0.1, []
+        return 'argument', 0.1, [], []
 
 def decide_final_class(model_class_code, confidence, has_vulgarity, is_threat, is_emergency):
     mapped_class = model_class_code
     model_confident = confidence >= CONFIDENCE_THRESHOLD
     is_uncertain = False
 
-    if is_emergency:
+    if is_emergency or mapped_class == 'crying':
         final_class = 'help'
-    elif is_threat:
+    elif is_threat or mapped_class == 'impact':
         final_class = 'threat'
-    elif mapped_class == 'scream' and confidence >= 0.3:
+    elif mapped_class == 'scream' and confidence >= 0.25:
         final_class = 'scream'
     elif has_vulgarity:
         final_class = 'argument'
@@ -195,77 +262,6 @@ def decide_final_class(model_class_code, confidence, has_vulgarity, is_threat, i
 
     return final_class, is_uncertain
 
-def censor_audio_and_text(audio_chunk, censored_transcript, whisper_words):
-    intervals_to_beep = []
-    
-    censored_transcript_nfc = unicodedata.normalize('NFC', censored_transcript)
-    
-    for p in PROFANITY_WORDS:
-        p_nfc = unicodedata.normalize('NFC', p.lower())
-        pattern = r'(?i)(?<![a-zA-Z0-9À-ỹ])' + re.escape(p_nfc) + r'(?![a-zA-Z0-9À-ỹ])'
-        
-        def match_and_beep(m):
-            match_str = m.group(0)
-            # Find which whisper_words overlap with this match to beep them out
-            # Whisper words have text. We can find the approximate timestamp by matching substrings
-            # But safer to just beep the whole interval of words that match
-            return '***'
-            
-        censored_transcript_nfc = re.sub(pattern, match_and_beep, censored_transcript_nfc)
-
-    # Let's use whisper_words to find the intervals to beep based on the PROFANITY_WORDS
-    words_map = []
-    for w in whisper_words:
-        clean_w = unicodedata.normalize('NFC', re.sub(r'[^a-zA-Z0-9À-ỹ]', '', w.word.lower()))
-        if clean_w:
-            words_map.append({
-                'word': clean_w,
-                'orig_word': w.word.strip(),
-                'start_time': w.start * 1000,
-                'end_time': w.end * 1000
-            })
-
-    for p in [unicodedata.normalize('NFC', p.lower()) for p in PROFANITY_WORDS]:
-        p_words = p.split()
-        if len(p_words) == 0: continue
-        for i in range(len(words_map) - len(p_words) + 1):
-            window_words = [words_map[j]['word'] for j in range(i, i+len(p_words))]
-            # Check if all words match exactly
-            if window_words == p_words:
-                start_ms = max(0, words_map[i]['start_time'] - 150)
-                end_ms = min(len(audio_chunk), words_map[i + len(p_words) - 1]['end_time'] + 150)
-                intervals_to_beep.append((start_ms, end_ms))
-
-    censored_transcript = censored_transcript_nfc
-    
-    if intervals_to_beep:
-        intervals_to_beep.sort()
-        merged = [intervals_to_beep[0]]
-        for current in intervals_to_beep[1:]:
-            last = merged[-1]
-            if current[0] <= last[1]:
-                merged[-1] = (last[0], max(last[1], current[1]))
-            else:
-                merged.append(current)
-
-        result_audio = audio_chunk[:0]
-        last_end = 0
-        for start_ms, end_ms in merged:
-            start_ms = int(start_ms)
-            end_ms = int(end_ms)
-            result_audio += audio_chunk[last_end:start_ms]
-            beep_duration = end_ms - start_ms
-            if beep_duration > 0:
-                beep = Sine(1000).to_audio_segment(duration=beep_duration).apply_gain(-10)
-                result_audio += beep
-            last_end = end_ms
-        result_audio += audio_chunk[last_end:]
-        return result_audio, censored_transcript
-    return audio_chunk, censored_transcript
-
-@app.route('/analyze-dialog', methods=['POST'])
-def analyze_dialog():
-    pass
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -281,42 +277,24 @@ def predict():
 
     try:
         audio = AudioSegment.from_file(filepath)
-        predicted_class, confidence = classify_audio(audio)
+        predicted_class, confidence, _, _ = classify_audio(audio)
 
-        transcript = ""
-        has_vulgarity = is_threat = is_emergency = False
-        whisper_words = []
+        transcript, whisper_words, segments, confidence_stt = transcribe_vietnamese(
+            whisper_model, audio, vad_filter=True
+        )
 
-        try:
-            waveform = get_whisper_waveform(audio)
-            segments, _ = whisper_model.transcribe(
-                waveform, 
-                language="vi", 
-                word_timestamps=True, 
-                vad_filter=True, 
-                vad_parameters=dict(min_silence_duration_ms=500),
-                condition_on_previous_text=False
-            )
-            for segment in segments:
-                # Xoá các câu "ảo giác" phổ biến của Whisper do data Youtube
-                lower_text = segment.text.lower()
-                if "subscribe" in lower_text or "ghiền mì gõ" in lower_text or "theo dõi kênh" in lower_text or "cảm ơn các bạn" in lower_text:
-                    continue
-                transcript += segment.text
-                whisper_words.extend(segment.words)
-            
-            # Censor first so fuzzy matching has a chance to place '***'
-            if transcript:
-                try:
-                    audio, transcript = censor_audio_and_text(audio, transcript, whisper_words)
-                    # Export immediately since we might have beeped the audio
-                    audio.export(filepath, format="wav")
-                except Exception as censor_err:
-                    print(f"Censoring Error: {censor_err}")
-            
-            has_vulgarity, is_threat, is_emergency = analyze_transcript(transcript)
-        except Exception as stt_err:
-            print(f"STT Error: {stt_err}")
+        censored_audio, censored_transcript, beep_intervals = censor_audio_and_text(
+            audio, transcript, whisper_words, profanity_list=PROFANITY_WORDS
+        )
+
+        # Ghi đè file audio bằng phiên bản đã đè tiếng bíp nếu phát hiện chửi thề
+        if beep_intervals:
+            try:
+                save_censored_audio(censored_audio, filepath)
+            except Exception as censor_err:
+                print(f"Censoring Export Error: {censor_err}")
+
+        has_vulgarity, is_threat, is_emergency = analyze_transcript(censored_transcript)
 
         final_class, is_uncertain = decide_final_class(
             predicted_class, confidence, has_vulgarity, is_threat, is_emergency
@@ -330,17 +308,17 @@ def predict():
             "has_vulgarity": has_vulgarity,
             "is_threat": is_threat,
             "is_emergency": is_emergency,
-            "transcript": transcript
+            "transcript": censored_transcript
         })
     except Exception as e:
         import traceback
         return jsonify({"error": str(e) + "\n" + traceback.format_exc()}), 500
 
-@app.route('/analyze-full', methods=['POST'])
-def analyze_full():
+
+@app.route('/analyze-dialog', methods=['POST'])
+def analyze_dialog():
     data = request.get_json(silent=True) or {}
     filename = data.get('filepath')
-    chunk_length_ms = data.get('chunk_length_ms', 10000)
 
     if not filename:
         return jsonify({"error": "Missing filepath parameter"}), 400
@@ -353,109 +331,189 @@ def analyze_full():
         audio = AudioSegment.from_file(filepath)
         total_duration_ms = len(audio)
 
-        nonsilent_ranges = detect_nonsilent(audio, min_silence_len=500, silence_thresh=-40)
-        if not nonsilent_ranges:
-            nonsilent_ranges = [[0, len(audio)]]
-            
+        predicted_class, conf, cry_timestamps, scream_timestamps = classify_audio(audio)
+        has_scream = (predicted_class == 'scream' and conf >= 0.25) or (len(scream_timestamps) > 0)
+        has_crying = (predicted_class == 'crying' and conf >= 0.18) or (len(cry_timestamps) > 0)
+
+        transcript, whisper_words, segments, confidence_stt = transcribe_vietnamese(
+            whisper_model, audio, vad_filter=True
+        )
+
+        censored_audio, censored_transcript, beep_intervals = censor_audio_and_text(
+            audio, transcript, whisper_words, profanity_list=PROFANITY_WORDS
+        )
+
+        if beep_intervals:
+            try:
+                save_censored_audio(censored_audio, filepath)
+            except Exception as exp_err:
+                print(f"Lỗi khi export: {exp_err}")
+
         dialogue = []
         current_speaker = "Người A"
-        last_end_time = 0
-        last_end_time_audio = 0
-        censored_full_audio = audio[:0]
+        last_seg_end = 0.0
         total_threats = 0
         total_vulgarity = 0
         total_emergency = 0
-        has_scream = False
-        
-        predicted_class, conf, scream_timestamps = classify_audio(audio)
-        if predicted_class == 'scream' and conf >= CONFIDENCE_THRESHOLD:
-            has_scream = True
-        
-        for start, end in nonsilent_ranges:
-            if start - last_end_time > 1000:
+
+        for seg in segments:
+            if last_seg_end > 0 and (seg.start - last_seg_end) > 1.0:
                 current_speaker = "Người B" if current_speaker == "Người A" else "Người A"
-                
-            chunk = audio[start:end] + 5
-            
-            whisper_words = []
-            transcript = ""
-            try:
-                waveform = get_whisper_waveform(chunk)
-                prompt = "Đây là đoạn hội thoại khẩn cấp, có người đang khóc lóc, van xin: cứu tôi với, đừng đánh nữa, đau quá, xin tha cho em. Hoặc có chửi bới: địt mẹ mày, cái lồn, chó đẻ."
-                segments, _ = whisper_model.transcribe(
-                    waveform, 
-                    language="vi", 
-                    word_timestamps=True, 
-                    vad_filter=True, 
-                    vad_parameters=dict(min_silence_duration_ms=500),
-                    condition_on_previous_text=False,
-                    initial_prompt=prompt
-                )
-                for segment in segments:
-                    lower_text = segment.text.lower()
-                    if "subscribe" in lower_text or "ghiền mì gõ" in lower_text or "theo dõi kênh" in lower_text or "cảm ơn các bạn" in lower_text:
-                        continue
-                    transcript += segment.text
-                    whisper_words.extend(segment.words)
-                
-                censored_chunk, censored_transcript = censor_audio_and_text(audio[start:end], transcript, whisper_words)
-                
-                v, t, e = analyze_transcript(censored_transcript)
-                if v: total_vulgarity += 1
-                if t: total_threats += 1
-                if e: total_emergency += 1
-                
-                if censored_transcript:
-                    dialogue.append({
-                        "speaker": current_speaker,
-                        "text": censored_transcript,
-                        "timestamp_s": round(start / 1000.0, 1),
-                        "start_time": round(start / 1000.0, 1),
-                        "end_time": round(end / 1000.0, 1),
-                        "has_vulgarity": v,
-                        "is_threat": t,
-                        "is_emergency": e
-                    })
-            except Exception as e_stt:
-                censored_chunk = audio[start:end]
-            
-            censored_full_audio += audio[last_end_time_audio:start]
-            censored_full_audio += censored_chunk
-            last_end_time_audio = end
-            last_end_time = end
 
-        censored_full_audio += audio[last_end_time_audio:]
+            _, seg_censored_text, _ = censor_audio_and_text(
+                audio[:0], seg.text, getattr(seg, "words", []) or [], profanity_list=PROFANITY_WORDS
+            )
+            v, t, e = analyze_transcript(seg_censored_text)
+            if v: total_vulgarity += 1
+            if t: total_threats += 1
+            if e: total_emergency += 1
 
-        probability = 5 
-        if has_scream: probability += 30
+            dialogue.append({
+                "speaker": current_speaker,
+                "text": seg_censored_text,
+                "timestamp_s": round(seg.start, 1),
+                "start_time": round(seg.start, 1),
+                "end_time": round(seg.end, 1),
+                "has_vulgarity": v,
+                "is_threat": t,
+                "is_emergency": e,
+            })
+            last_seg_end = seg.end
+
+        probability = 5
+        if has_scream: probability += 35
+        if has_crying: probability += 35
+        if total_emergency > 0: probability += 40 + (min(total_emergency, 3) * 5)
         if total_threats > 0: probability += 25 + (min(total_threats, 3) * 5)
         if total_vulgarity > 0: probability += 15 + (min(total_vulgarity, 3) * 5)
-        if total_emergency > 0: probability += 40
-        if len(set(d['speaker'] for d in dialogue)) > 1 and (total_vulgarity > 0 or total_threats > 0):
+        if len(set(d['speaker'] for d in dialogue)) > 1 and (total_vulgarity > 0 or total_threats > 0 or total_emergency > 0):
+            probability += 10
+
+        probability = min(probability, 99)
+        if probability < 10 and not dialogue and not has_scream and not has_crying:
+            probability = 0
+
+        dialog_result = {
+            "dialogue": dialogue,
+            "violence_probability": probability,
+            "has_scream": has_scream,
+            "has_crying": has_crying,
+            "threats_count": total_threats,
+            "vulgarity_count": total_vulgarity,
+            "emergency_count": total_emergency
+        }
+        return jsonify(dialog_result)
+
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e) + "\n" + traceback.format_exc()}), 500
+
+
+@app.route('/analyze-full', methods=['POST'])
+def analyze_full():
+    data = request.get_json(silent=True) or {}
+    filename = data.get('filepath')
+
+    if not filename:
+        return jsonify({"error": "Missing filepath parameter"}), 400
+
+    filepath = resolve_safe_path(filename)
+    if filepath is None or not os.path.exists(filepath):
+        return jsonify({"error": "File not found or invalid path"}), 404
+
+    try:
+        audio = AudioSegment.from_file(filepath)
+        total_duration_ms = len(audio)
+
+        # 1. Nhận diện sự kiện âm thanh bằng YAMNet (gào thét, khóc lóc, va đập)
+        predicted_class, conf, cry_timestamps, scream_timestamps = classify_audio(audio)
+        has_scream = (predicted_class == 'scream' and conf >= 0.25) or (len(scream_timestamps) > 0)
+        has_crying = (predicted_class == 'crying' and conf >= 0.18) or (len(cry_timestamps) > 0)
+
+        # 2. Nhận diện giọng nói tiếng Việt tối ưu bằng Faster-Whisper
+        transcript, whisper_words, segments, confidence_stt = transcribe_vietnamese(
+            whisper_model, audio, vad_filter=True
+        )
+
+        # 3. Kiểm duyệt âm thanh (đè tiếng bíp 1000Hz) & văn bản (thay bằng ***)
+        censored_audio, censored_transcript, beep_intervals = censor_audio_and_text(
+            audio, transcript, whisper_words, profanity_list=PROFANITY_WORDS
+        )
+
+        # Ghi đè file audio gốc trong tai-lieu bằng phiên bản đã chèn tiếng bíp
+        if beep_intervals:
+            try:
+                save_censored_audio(censored_audio, filepath)
+            except Exception as exp_err:
+                print(f"Lỗi khi ghi đè file audio đã kiểm duyệt: {exp_err}")
+
+        # 4. Phân tích đối thoại theo từng câu & người nói
+        dialogue = []
+        current_speaker = "Người A"
+        last_seg_end = 0.0
+        total_threats = 0
+        total_vulgarity = 0
+        total_emergency = 0
+
+        for seg in segments:
+            if last_seg_end > 0 and (seg.start - last_seg_end) > 1.0:
+                current_speaker = "Người B" if current_speaker == "Người A" else "Người A"
+
+            _, seg_censored_text, _ = censor_audio_and_text(
+                audio[:0], seg.text, getattr(seg, "words", []) or [], profanity_list=PROFANITY_WORDS
+            )
+            v, t, e = analyze_transcript(seg_censored_text)
+            if v: total_vulgarity += 1
+            if t: total_threats += 1
+            if e: total_emergency += 1
+
+            dialogue.append({
+                "speaker": current_speaker,
+                "text": seg_censored_text,
+                "timestamp_s": round(seg.start, 1),
+                "start_time": round(seg.start, 1),
+                "end_time": round(seg.end, 1),
+                "has_vulgarity": v,
+                "is_threat": t,
+                "is_emergency": e,
+            })
+            last_seg_end = seg.end
+
+        # Tính toán xác suất bạo lực (violence probability)
+        probability = 5 
+        if has_scream: probability += 35
+        if has_crying: probability += 35
+        if total_emergency > 0: probability += 40 + (min(total_emergency, 3) * 5)
+        if total_threats > 0: probability += 25 + (min(total_threats, 3) * 5)
+        if total_vulgarity > 0: probability += 15 + (min(total_vulgarity, 3) * 5)
+        if len(set(d['speaker'] for d in dialogue)) > 1 and (total_vulgarity > 0 or total_threats > 0 or total_emergency > 0):
             probability += 10
             
-        probability = min(probability, 98)
-        if probability < 10 and not dialogue:
+        probability = min(probability, 99)
+        if probability < 10 and not dialogue and not has_scream and not has_crying:
             probability = 0
             
         dialog_result = {
             "dialogue": dialogue,
             "violence_probability": probability,
             "has_scream": has_scream,
+            "has_crying": has_crying,
             "threats_count": total_threats,
-            "vulgarity_count": total_vulgarity
+            "vulgarity_count": total_vulgarity,
+            "emergency_count": total_emergency
         }
 
+        # 5. Xuất các đoạn clip cảnh báo 10 giây (cũng được lấy từ censored_audio)
         alerts_found = []
         is_valid_alert = False
         final_class = 'argument'
         
-        if probability >= 10 or has_scream or total_threats > 0 or total_emergency > 0 or total_vulgarity > 0:
+        if probability >= 10 or has_scream or has_crying or total_threats > 0 or total_emergency > 0 or total_vulgarity > 0:
             is_valid_alert = True
-            if has_scream:
-                final_class = 'scream'
-            elif total_emergency > 0:
+            if has_crying or total_emergency > 0:
                 final_class = 'help'
+            elif has_scream:
+                final_class = 'scream'
             elif total_threats > 0:
                 final_class = 'threat'
                 
@@ -467,6 +525,11 @@ def analyze_full():
                 b = int(t // 10)
                 if b not in buckets: buckets[b] = set()
                 buckets[b].add('scream')
+
+            for t in cry_timestamps:
+                b = int(t // 10)
+                if b not in buckets: buckets[b] = set()
+                buckets[b].add('help')
                 
             for pd in problematic_dialogues:
                 center_s = (pd['start_time'] + pd['end_time']) / 2
@@ -476,6 +539,7 @@ def analyze_full():
                 pd_type = 'argument'
                 if pd.get('is_emergency'): pd_type = 'help'
                 elif pd.get('is_threat'): pd_type = 'threat'
+                elif has_crying: pd_type = 'help'
                 elif has_scream: pd_type = 'scream'
                 buckets[b].add(pd_type)
                 
@@ -493,7 +557,7 @@ def analyze_full():
                 
                 start_ms = int(start_s * 1000)
                 end_ms = int(end_s * 1000)
-                audio_snippet = censored_full_audio[start_ms:end_ms]
+                audio_snippet = censored_audio[start_ms:end_ms]
                 
                 alert_filename = f"alert_10s_{uuid.uuid4().hex[:8]}.wav"
                 alert_filepath = os.path.join(UPLOAD_DIR, alert_filename)
@@ -502,7 +566,14 @@ def analyze_full():
                 except Exception as e:
                     print(f"Lỗi khi export alert 10s audio: {e}")
                     
-                bucket_transcripts = [d['text'] for d in dialogue if start_s <= d['start_time'] <= end_s or start_s <= d['end_time'] <= end_s]
+                bucket_transcripts = [
+                    d['text'] for d in dialogue 
+                    if (start_s <= d['start_time'] <= end_s) 
+                    or (start_s <= d['end_time'] <= end_s) 
+                    or (d['start_time'] <= start_s and d['end_time'] >= end_s)
+                ]
+                if not bucket_transcripts and censored_transcript:
+                    bucket_transcripts = [censored_transcript]
                 
                 alerts_found.append({
                     "start_time_seconds": start_s,
@@ -513,7 +584,9 @@ def analyze_full():
                     "transcript": " ".join(bucket_transcripts) if bucket_transcripts else "",
                     "has_vulgarity": total_vulgarity > 0,
                     "is_threat": total_threats > 0,
-                    "is_emergency": total_emergency > 0
+                    "is_emergency": total_emergency > 0,
+                    "has_crying": has_crying,
+                    "has_scream": has_scream
                 })
             
         return jsonify({

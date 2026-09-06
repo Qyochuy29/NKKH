@@ -50,9 +50,9 @@ namespace SchoolGuardian.Api
         // ====================================================
         public static class SoundLabels
         {
-            public const string Help     = "Kêu cứu";
+            public const string Help     = "Kêu cứu / Van xin";
             public const string Threat   = "Đe dọa";
-            public const string Scream   = "La hét";
+            public const string Scream   = "Gào thét / La hét";
             public const string Argument = "Cãi vã";
             public const string Unknown  = "Cảnh báo";
         }

@@ -1,8 +1,8 @@
 import re
 import os
 
-source_file = 'c:/website/esp32-voice-recorder-20260828T083632Z-1-001/esp32-voice-recorder/codetrainplatf_main.cpp'
-target_file = 'c:/website/esp32-voice-recorder-20260828T083632Z-1-001/esp32-voice-recorder/src/main.cpp'
+source_file = 'c:/NKKH/esp32-voice-recorder-20260828T083632Z-1-001/esp32-voice-recorder/codetrainplatf_main.cpp'
+target_file = 'c:/NKKH/esp32-voice-recorder-20260828T083632Z-1-001/esp32-voice-recorder/src/main.cpp'
 
 with open(source_file, 'r', encoding='utf-8') as f:
     source = f.read()
@@ -52,7 +52,7 @@ new_target = f"""/*
 #define I2S_READ_SAMPLES 1024
 
 // ---------- CẤU HÌNH SERVER ----------
-const char* serverBase    = "http://192.168.100.181:3000";
+const char* serverBase    = "http://192.168.1.88:3000";
 const char* deviceToken   = "your_secure_device_token_123";
 const char* deviceId      = "Cam-HL1";
 

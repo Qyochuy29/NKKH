@@ -52,8 +52,8 @@ namespace SchoolGuardian.Api.Services
             var title = "Phát hiện cảnh báo mới!";
             var soundName = alert.SoundType switch
             {
-                SoundType.scream => "tiếng la hét",
-                SoundType.help => "tiếng kêu cứu",
+                SoundType.scream => "tiếng gào thét / la hét",
+                SoundType.help => "tiếng kêu cứu / van xin",
                 SoundType.threat => "tiếng đe dọa",
                 SoundType.argument => "tiếng cãi vã",
                 _ => "âm thanh bất thường"

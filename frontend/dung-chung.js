@@ -197,8 +197,8 @@ function showToast(title, message, severity = 'info') {
 
 function showAlertToast(alert) {
   const typeLabels = {
-    scream: '<i class="bi bi-volume-up" style="color:var(--danger)"></i> La hét',
-    help: '<i class="bi bi-person-arms-up" style="color:var(--warning)"></i> Kêu cứu',
+    scream: '<i class="bi bi-volume-up" style="color:var(--danger)"></i> Gào thét / La hét',
+    help: '<i class="bi bi-person-arms-up" style="color:var(--warning)"></i> Kêu cứu / Van xin',
     threat: '<i class="bi bi-shield-exclamation" style="color:var(--caution)"></i> Đe dọa',
     argument: '<i class="bi bi-chat-right-text" style="color:var(--info)"></i> Cãi vã',
   };
@@ -436,8 +436,8 @@ function escapeHTML(str) {
 
 /* ========== LABEL HELPERS ========== */
 const SOUND_TYPE_LABELS = {
-  scream: { label: 'La hét', icon: '<i class="bi bi-volume-up" style="color:var(--danger)"></i>', color: 'danger' },
-  help: { label: 'Kêu cứu', icon: '<i class="bi bi-person-arms-up" style="color:var(--warning)"></i>', color: 'warning' },
+  scream: { label: 'Gào thét / La hét', icon: '<i class="bi bi-volume-up" style="color:var(--danger)"></i>', color: 'danger' },
+  help: { label: 'Kêu cứu / Van xin', icon: '<i class="bi bi-person-arms-up" style="color:var(--warning)"></i>', color: 'warning' },
   threat: { label: 'Đe dọa', icon: '<i class="bi bi-shield-exclamation" style="color:var(--caution)"></i>', color: 'caution' },
   argument: { label: 'Cãi vã', icon: '<i class="bi bi-chat-right-text" style="color:var(--info)"></i>', color: 'info' },
 };

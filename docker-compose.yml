@@ -53,16 +53,23 @@ services:
       redis:
         condition: service_healthy
 
-#  ai-service:
-#    build:
-#      context: ./huan-luyen-ai
-#    container_name: sg-ai
-#    ports:
-#      - "5000:5000"
-#    volumes:
-#      - ./tai-lieu:/app/uploads
-#    restart: unless-stopped
+  ai-service:
+    build:
+      context: ./ai-training
+      dockerfile: Dockerfile
+    container_name: sg-ai
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./ai-training:/app
+      - ./tai-lieu:/tai-lieu
+      - ai_cache:/root/.cache
+    environment:
+      - UPLOAD_DIR=/tai-lieu
+      - WHISPER_MODEL_SIZE=small
+    restart: unless-stopped
 
 volumes:
   pg_data:
   dp_keys:
+  ai_cache:

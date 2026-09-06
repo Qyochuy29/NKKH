@@ -1,5 +1,5 @@
 // tong-quan.js — Dashboard page logic
-(function() {
+(function () {
   let hourlyChart = null;
   const user = initPage('dashboard');
   if (!user) return;
@@ -52,7 +52,7 @@
   function renderDevicesTable(devices) {
     const tbody = document.getElementById('dashboard-devices-tbody');
     if (!tbody) return;
-    
+
     if (devices.length === 0) {
       tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">Không có thiết bị nào</td></tr>';
       return;
@@ -61,11 +61,11 @@
     let html = '';
     devices.forEach(d => {
       const statusColor = d.status === 'online' ? 'var(--success)' :
-                          d.status === 'error' ? 'var(--danger)' : 'var(--text-muted)';
+        d.status === 'error' ? 'var(--danger)' : 'var(--text-muted)';
       const statusText = d.status === 'online' ? 'Trực tuyến' :
-                         d.status === 'error' ? 'Lỗi/Mất kết nối' : 'Ngoại tuyến';
+        d.status === 'error' ? 'Lỗi/Mất kết nối' : 'Ngoại tuyến';
       const areaName = d.area?.name || d.area || 'Không xác định';
-      
+
       html += `
         <tr>
           <td><strong>${escapeHTML(d.name)}</strong></td>
