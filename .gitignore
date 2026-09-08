@@ -1,0 +1,28 @@
+# Bộ cài đặt lớn (không đẩy lên GitHub)
+Cai_Dat_WSL_Cho_Docker.msi
+*.msi
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+ai-training/__pycache__/
+test_*.py
+
+# .NET / C#
+bin/
+obj/
+backend-csharp/bin/
+backend-csharp/obj/
+*.user
+*.suo
+
+# Docker data
+pg_data/
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

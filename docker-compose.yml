@@ -16,6 +16,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
@@ -27,6 +28,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
 
   backend:
     build:
@@ -46,6 +48,7 @@ services:
       Jwt__RefreshSecret: "school-guardian-refresh-secret-key-2024"
       ASPNETCORE_ENVIRONMENT: "Production"
       ASPNETCORE_URLS: "http://+:3000"
+      AiService__Url: "http://ai-service:5000"
     restart: unless-stopped
     depends_on:
       postgres:

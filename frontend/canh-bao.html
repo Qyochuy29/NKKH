@@ -34,8 +34,8 @@
         <button class="btn btn-primary" onclick="loadAlerts()">🔍 Lọc</button>
         <button class="btn btn-outline" onclick="clearFilters()">Xoá lọc</button>
         <div style="flex-grow: 1;"></div>
-        <button class="btn btn-danger" onclick="document.getElementById('audio-upload').click()">🎙️ Tải âm thanh lên AI</button>
-        <input type="file" id="audio-upload" accept="audio/*" style="display:none" onchange="uploadAudio(event)">
+        <button class="btn btn-danger" onclick="document.getElementById('audio-upload').click()">🎙️ Tải âm thanh / Video lên AI</button>
+        <input type="file" id="audio-upload" accept="audio/*,video/*,.mp4,.mkv,.webm,.mov,.wav,.mp3,.m4a" style="display:none" onchange="uploadAudio(event)">
       </div>
 
       <!-- Alert Cards -->

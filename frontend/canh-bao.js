@@ -135,9 +135,11 @@
 
   function renderAlertCard(a) {
     const type = SOUND_TYPE_LABELS[a.sound_type] || { icon: '❓', label: a.sound_type, color: 'info' };
-    const status = STATUS_LABELS[a.status] || { label: a.status, class: 'badge-muted' };
-    const audioHtml = a.audio_file_url
-      ? `<audio controls preload="none" style="height:32px;"><source src="${a.audio_file_url}">Trình duyệt không hỗ trợ</audio>`
+    const audioUrlWithCacheBust = a.audio_file_url
+      ? `${a.audio_file_url}${a.audio_file_url.includes('?') ? '&' : '?'}v=${encodeURIComponent(a.timestamp || Date.now())}`
+      : '';
+    const audioHtml = audioUrlWithCacheBust
+      ? `<audio controls preload="none" style="height:32px;"><source src="${audioUrlWithCacheBust}">Trình duyệt không hỗ trợ</audio>`
       : '';
 
     function formatNotesHtml(notes, soundType) {
@@ -258,7 +260,27 @@
         </div>`;
       }).join('');
 
-      modalBody.innerHTML = statsHtml + html;
+      const origUrl = dialogDataObj?.original_audio_url;
+      const clipUrl = alertData.audio_file_url;
+
+      let audioPlayersHtml = `
+        <div style="background:var(--bg-secondary, #f8fafc);border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;margin-bottom:16px;">
+          <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:10px;"><i class="bi bi-file-earmark-play-fill text-danger"></i> Tệp âm thanh liên quan:</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:12px;">
+            ${clipUrl ? `
+            <div style="background:#fff;border:1px solid #fee2e2;border-radius:8px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+              <div style="font-weight:600;font-size:12px;color:var(--danger);margin-bottom:4px;"><i class="bi bi-scissors"></i> Đoạn cắt cảnh báo 10s (đã đè tiếng bíp):</div>
+              <audio controls style="width:100%;height:32px;"><source src="${clipUrl}${clipUrl.includes('?') ? '&' : '?'}v=${Date.now()}">Trình duyệt không hỗ trợ</audio>
+            </div>` : ''}
+            ${origUrl ? `
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+              <div style="font-weight:600;font-size:12px;color:#2563eb;margin-bottom:4px;"><i class="bi bi-soundwave"></i> Toàn bộ file âm thanh (đã chèn tiếng bíp):</div>
+              <audio controls style="width:100%;height:32px;"><source src="${origUrl}${origUrl.includes('?') ? '&' : '?'}v=${Date.now()}">Trình duyệt không hỗ trợ</audio>
+            </div>` : ''}
+          </div>
+        </div>`;
+
+      modalBody.innerHTML = statsHtml + audioPlayersHtml + html;
     } catch (err) {
       modalBody.innerHTML = `<div style="text-align:center;padding:30px;color:var(--danger)"><i class="bi bi-exclamation-triangle" style="font-size:32px"></i><p style="margin-top:12px">Lỗi tải dữ liệu: ${err.message}</p></div>`;
     }

@@ -15,14 +15,16 @@ namespace SchoolGuardian.Api.Services
         private readonly ILogger<AlertsService> _logger;
         private readonly IPushNotificationService _pushNotificationService;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly string _aiServiceUrl;
 
-        public AlertsService(ApplicationDbContext db, IHubContext<AlertHub> hub, ILogger<AlertsService> logger, IPushNotificationService pushNotificationService, IHttpClientFactory httpClientFactory)
+        public AlertsService(ApplicationDbContext db, IHubContext<AlertHub> hub, ILogger<AlertsService> logger, IPushNotificationService pushNotificationService, IHttpClientFactory httpClientFactory, IConfiguration config)
         {
             _db = db;
             _hub = hub;
             _logger = logger;
             _pushNotificationService = pushNotificationService;
             _httpClientFactory = httpClientFactory;
+            _aiServiceUrl = config["AiService:Url"] ?? Environment.GetEnvironmentVariable("AI_SERVICE_URL") ?? "http://ai-service:5000";
         }
 
         public async Task<object> FindAll(AlertQueryDto query, string? userRole, string? userId)
@@ -212,11 +214,26 @@ namespace SchoolGuardian.Api.Services
                 var absolutePath = Path.GetFileName(audioUrl);
                 using var client = _httpClientFactory.CreateClient();
                 client.Timeout = TimeSpan.FromMinutes(5); // Chờ AI phân tích
-                var response = await client.PostAsJsonAsync("http://host.docker.internal:5000/analyze-full", new { filepath = absolutePath });
+                var response = await client.PostAsJsonAsync($"{_aiServiceUrl.TrimEnd('/')}/analyze-full", new { filepath = absolutePath });
                 if (response.IsSuccessStatusCode)
                 {
                     var result = await response.Content.ReadFromJsonAsync<JsonElement>();
                     var dialogData = result.TryGetProperty("dialog_data", out var d) ? d.GetRawText() : null;
+                    if (!string.IsNullOrEmpty(dialogData))
+                    {
+                        try
+                        {
+                            using var doc = JsonDocument.Parse(dialogData);
+                            var dict = new Dictionary<string, object?>();
+                            foreach (var prop in doc.RootElement.EnumerateObject())
+                            {
+                                dict[prop.Name] = JsonSerializer.Deserialize<object>(prop.Value.GetRawText());
+                            }
+                            dict["original_audio_url"] = audioUrl;
+                            dialogData = JsonSerializer.Serialize(dict);
+                        }
+                        catch {}
+                    }
 
                     bool hasAlerts = false;
                     if (result.TryGetProperty("alerts", out var alertsArr) && alertsArr.ValueKind == JsonValueKind.Array && alertsArr.GetArrayLength() > 0)
@@ -229,6 +246,7 @@ namespace SchoolGuardian.Api.Services
                             var filename = alertJson.GetProperty("filename").GetString();
                             var finalAudioUrl = $"/uploads/{filename}";
                             var startTime = alertJson.TryGetProperty("start_time_seconds", out var st) ? st.GetDouble() : 0;
+                            var endTime = alertJson.TryGetProperty("end_time_seconds", out var et) ? et.GetDouble() : startTime + 10;
                             var typeLabel = soundType switch {
                                 "help"     => AppConstants.SoundLabels.Help,
                                 "threat"   => AppConstants.SoundLabels.Threat,
@@ -238,8 +256,8 @@ namespace SchoolGuardian.Api.Services
                             };
                             var transcript = alertJson.TryGetProperty("transcript", out var t) ? t.GetString() : null;
                             var notes = !string.IsNullOrEmpty(transcript)
-                                ? $"[Giây {startTime:F1}] {typeLabel}: \"{transcript}\""
-                                : $"[Giây {startTime:F1}] {typeLabel}: Không rõ tiếng.";
+                                ? $"[Giây {startTime:F1} - {endTime:F1}] {typeLabel}: \"{transcript}\""
+                                : $"[Giây {startTime:F1} - {endTime:F1}] {typeLabel}: Không rõ tiếng.";
 
                             byte[]? audioBytes = null;
                             var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads", filename);
@@ -365,7 +383,7 @@ namespace SchoolGuardian.Api.Services
                 var absolutePath = Path.GetFileName(audioUrl);
                 using var client = _httpClientFactory.CreateClient();
                 client.Timeout = TimeSpan.FromMinutes(10);
-                var response = await client.PostAsJsonAsync("http://host.docker.internal:5000/analyze-dialog", new { filepath = absolutePath });
+                var response = await client.PostAsJsonAsync($"{_aiServiceUrl.TrimEnd('/')}/analyze-dialog", new { filepath = absolutePath });
                 
                 if (response.IsSuccessStatusCode)
                 {

@@ -167,6 +167,7 @@ if (Directory.Exists(frontendPath))
 }
 
 app.MapControllers();
+app.MapGet("/", () => Results.Redirect("/dang-nhap.html"));
 
 // SignalR Hub - Frontend kết nối tới /ws/alerts
 // (tương đương namespace '/ws/alerts' của Socket.IO trong NestJS)

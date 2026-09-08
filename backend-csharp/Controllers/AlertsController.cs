@@ -214,9 +214,9 @@ namespace SchoolGuardian.Api.Controllers
                 return BadRequest(new { error = "File size exceeds 50MB limit" });
 
             var ext = Path.GetExtension(audio.FileName).ToLower();
-            var allowedExts = new[] { ".wav", ".mp3", ".m4a" };
+            var allowedExts = new[] { ".wav", ".mp3", ".m4a", ".mp4", ".webm", ".mkv", ".mov", ".avi", ".aac", ".ogg" };
             if (!allowedExts.Contains(ext))
-                return BadRequest(new { error = "Invalid file type. Allowed: .wav, .mp3, .m4a" });
+                return BadRequest(new { error = "Invalid file type. Allowed audio & video: .wav, .mp3, .m4a, .mp4, .webm, .mkv, .mov" });
 
             var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
             Directory.CreateDirectory(uploadsDir);
@@ -328,7 +328,7 @@ namespace SchoolGuardian.Api.Controllers
                 else if (ext == ".m4a") contentType = "audio/mp4";
             }
 
-            return File(alert.AudioData, contentType);
+            return File(alert.AudioData, contentType, enableRangeProcessing: true);
         }
     }
 }

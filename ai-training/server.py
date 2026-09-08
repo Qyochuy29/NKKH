@@ -162,10 +162,46 @@ def analyze_transcript(transcript: str):
     is_emergency = any(contains_word(lower_text, w) for w in EMERGENCY_WORDS)
     return has_vulgarity, is_threat, is_emergency
 
+import subprocess
+
 def save_censored_audio(censored_audio, filepath):
     ext = os.path.splitext(filepath)[1].lstrip('.').lower()
-    fmt = ext if ext in ['mp3', 'wav', 'ogg', 'flac'] else 'wav'
-    censored_audio.export(filepath, format=fmt)
+    if ext in ['mp4', 'webm', 'mkv', 'mov', 'avi']:
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tf:
+            temp_wav = tf.name
+        temp_out = filepath + ".tmp." + ext
+        try:
+            censored_audio.export(temp_wav, format="wav")
+            cmd = [
+                "ffmpeg", "-y",
+                "-i", filepath,
+                "-i", temp_wav,
+                "-c:v", "copy",
+                "-map", "0:v:0?",
+                "-map", "1:a:0",
+                "-c:a", "aac",
+                "-b:a", "192k",
+                "-shortest",
+                temp_out
+            ]
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            if res.returncode == 0 and os.path.exists(temp_out) and os.path.getsize(temp_out) > 0:
+                os.replace(temp_out, filepath)
+            else:
+                censored_audio.export(filepath, format="mp3")
+        except Exception as err:
+            print(f"Lỗi khi thay audio cho video bằng ffmpeg: {err}")
+        finally:
+            if os.path.exists(temp_wav):
+                try: os.remove(temp_wav)
+                except Exception: pass
+            if os.path.exists(temp_out):
+                try: os.remove(temp_out)
+                except Exception: pass
+    else:
+        fmt = ext if ext in ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'] else 'mp3'
+        censored_audio.export(filepath, format=fmt)
+
 
 # ============================================================
 # CẤU HÌNH NHÃN YAMNET CHUẨN XÁC TỪ GOOGLE AUDIOSET
@@ -521,6 +557,7 @@ def analyze_full():
             problematic_dialogues = [d for d in dialogue if d.get('has_vulgarity') or d.get('is_threat') or d.get('is_emergency')]
             
             buckets = {}
+            # 1. Bucket từ sự kiện âm thanh YAMNet (tiếng hét & tiếng khóc)
             for t in scream_timestamps:
                 b = int(t // 10)
                 if b not in buckets: buckets[b] = set()
@@ -530,25 +567,39 @@ def analyze_full():
                 b = int(t // 10)
                 if b not in buckets: buckets[b] = set()
                 buckets[b].add('help')
-                
-            for pd in problematic_dialogues:
-                center_s = (pd['start_time'] + pd['end_time']) / 2
-                b = int(center_s // 10)
+
+            # 2. Bucket từ các đoạn bị chèn tiếng bíp kiểm duyệt
+            for start_ms, end_ms in beep_intervals:
+                b = int((start_ms / 1000) // 10)
                 if b not in buckets: buckets[b] = set()
-                
+                buckets[b].add('argument')
+
+            # 3. Phân bổ các câu đối thoại vi phạm vào TẤT CẢ các đoạn 10 giây mà nó trải dài qua
+            for pd in problematic_dialogues:
                 pd_type = 'argument'
                 if pd.get('is_emergency'): pd_type = 'help'
                 elif pd.get('is_threat'): pd_type = 'threat'
                 elif has_crying: pd_type = 'help'
                 elif has_scream: pd_type = 'scream'
-                buckets[b].add(pd_type)
-                
+
+                start_b = int(pd['start_time'] // 10)
+                end_b = int(pd['end_time'] // 10)
+                for b in range(start_b, end_b + 1):
+                    if b not in buckets: buckets[b] = set()
+                    buckets[b].add(pd_type)
+
             if not buckets:
-                buckets[0] = {final_class}
+                # Nếu không xác định được mốc thời gian cụ thể, chia toàn bộ file thành các đoạn 10s
+                max_b = max(1, int(np.ceil(total_duration_ms / 10000)))
+                for b in range(max_b):
+                    buckets[b] = {final_class}
                 
-            for b, types in buckets.items():
+            for b in sorted(buckets.keys()):
+                types = buckets[b]
                 start_s = b * 10
                 end_s = min(total_duration_ms / 1000, start_s + 10)
+                if start_s >= (total_duration_ms / 1000):
+                    continue
                 
                 bucket_type = 'argument'
                 if 'help' in types: bucket_type = 'help'
@@ -566,22 +617,35 @@ def analyze_full():
                 except Exception as e:
                     print(f"Lỗi khi export alert 10s audio: {e}")
                     
-                bucket_transcripts = [
-                    d['text'] for d in dialogue 
-                    if (start_s <= d['start_time'] <= end_s) 
-                    or (start_s <= d['end_time'] <= end_s) 
-                    or (d['start_time'] <= start_s and d['end_time'] >= end_s)
+                # Chỉ lấy đúng các từ được phát ra trong khoảng [start_s, end_s] của đoạn 10s này
+                words_in_bucket = [
+                    getattr(w, 'word', '').strip()
+                    for w in whisper_words
+                    if (start_s - 0.2 <= getattr(w, 'start', 0.0) < end_s + 0.2)
+                    or (start_s - 0.2 <= getattr(w, 'end', 0.0) <= end_s + 0.2)
                 ]
-                if not bucket_transcripts and censored_transcript:
-                    bucket_transcripts = [censored_transcript]
+                words_in_bucket = [w for w in words_in_bucket if w]
+                
+                if words_in_bucket:
+                    bucket_text = " ".join(words_in_bucket)
+                    bucket_text = unicodedata.normalize("NFC", bucket_text)
+                    for p in PROFANITY_WORDS:
+                        if p and p.strip():
+                            bucket_text = re.sub(r"(?i)(?<!\w)" + re.escape(p.strip()) + r"(?!\w)", "***", bucket_text)
+                else:
+                    overlapping = [
+                        d['text'] for d in dialogue 
+                        if (start_s <= d['start_time'] <= end_s) or (start_s <= d['end_time'] <= end_s)
+                    ]
+                    bucket_text = " ".join(overlapping) if overlapping else (censored_transcript if total_duration_ms <= 12000 else "")
                 
                 alerts_found.append({
                     "start_time_seconds": start_s,
-                    "end_time_seconds": end_s,
+                    "end_time_seconds": round(end_s, 1),
                     "filename": alert_filename,
                     "soundType": bucket_type,
                     "confidence": probability,
-                    "transcript": " ".join(bucket_transcripts) if bucket_transcripts else "",
+                    "transcript": bucket_text.strip(),
                     "has_vulgarity": total_vulgarity > 0,
                     "is_threat": total_threats > 0,
                     "is_emergency": total_emergency > 0,

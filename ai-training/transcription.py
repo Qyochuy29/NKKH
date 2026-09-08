@@ -49,16 +49,27 @@ DEFAULT_PROFANITY_WORDS = [
     'mịt con mẹ mày',
     'cái mịt con mẹ mày',
     'mình còn mẹ à mày',
+    'cái địt con mẹ',
+    'cái mịt con mẹ',
     'địt cả lò nhà mày',
+    'cả lò nhà mày',
     'địt con bà mày',
     'địt mẹ cha mày',
     'câm mẹ cái mồm mày đi',
+    'cầm mẹ cái mồn mày đi',
+    'câm mẹ cái mồm mày',
+    'cầm mẹ cái mồn mày',
     'câm mẹ cái mồm',
+    'cầm mẹ cái mồn',
     'câm mẹ cái mỏ',
     'câm mẹ mày mồm',
+    'đánh vỡ mồm mày ra rồi',
     'đánh vỡ mồm mày',
     'đập vỡ mồm mày',
     'vả vỡ mồm mày',
+    'với mồn mày ra rồi',
+    'với mồm mày ra rồi',
+    'vỡ mồm mày ra rồi',
     'tuổi lồn sánh vai',
     'tuổi lôn sánh vai',
     'tuổi lôn xánh mày',
@@ -70,8 +81,11 @@ DEFAULT_PROFANITY_WORDS = [
     'bố mày nhờn với mày',
     'bố mày nhợn với mày',
     'bố mày nhớt với mày',
+    'mày có cầm mẹ',
+    'mày có câm mẹ',
 
     # Cụm 3 từ
+    'địt con mẹ mà',
     'địt con mẹ',
     'đit con mẹ',
     'địt mẹ mày',
@@ -90,10 +104,17 @@ DEFAULT_PROFANITY_WORDS = [
     'câm mẹ mồm',
     'câm mẹ mỏ',
     'cái đầu buồi',
+    'đau bùi lắm bùi',
+    'đau buồi lắm buồi',
+    'buổi lắm buổi nha mày',
+    'buồi lắm buồi nha mày',
     'cần cặc gì',
+    'cận dịch cái',
+    'cận dịch',
     'con chó đẻ',
     'con chó chết',
     'đồ chó chết',
+    'đồ chó đẻ',
     'đồ súc vật',
     'đồ su vật',
     'loại súc vật',
@@ -112,6 +133,7 @@ DEFAULT_PROFANITY_WORDS = [
     'nhợn với bố',
     'nhờn với tao',
     'vỡ mồm mày',
+    'với mồn mày',
     'chết mẹ mày',
     'chết cha mày',
     'tuổi lồn gì',
@@ -137,6 +159,9 @@ DEFAULT_PROFANITY_WORDS = [
     'bố mày',
     'mẹ kiếp',
     'đầu buồi',
+    'đau bùi', 'đau buồi',
+    'buổi lắm', 'buổi nha',
+    'buồi lắm', 'buồi nha',
     'lồn buồi',
     'cái lồn', 'cái lôn',
     'láu lồn', 'láu lôn',
@@ -163,12 +188,16 @@ DEFAULT_PROFANITY_WORDS = [
     'rẻ rách',
     'rác rưởi',
     'câm mồm',
+    'cầm mồn',
     'câm họng',
     'câm miệng',
     'câm mẹ',
+    'cầm mẹ',
     'chết mẹ',
     'chết cha',
     'vỡ mồm',
+    'với mồn',
+    'với mồm',
     'đánh bỡi',
     'vê lờ',
     'vê cờ lờ',
@@ -178,11 +207,11 @@ DEFAULT_PROFANITY_WORDS = [
     'con lồn', 'con lôn',
 
     # Từ đơn tục tĩu
-    'địt', 'đit', 'đjt', 'dit', 'djt',
+    'địt', 'đit', 'đjt', 'dit', 'djt', 'mịt',
     'đụ', 'du',
     'lồn', 'lon', 'lồz', 'loz', 'lôn',
     'cặc', 'kặc', 'cac', 'cặt',
-    'buồi', 'buoi', 'bùi', 'buôi',
+    'buồi', 'buoi', 'bùi', 'buôi', 'buổi', 'bổi',
     'đĩ', 'di',
     'phò', 'pho',
     'đéo', 'deo', 'đek', 'đếch',
@@ -193,6 +222,19 @@ DEFAULT_PROFANITY_WORDS = [
     'điếm',
 ]
 
+# Các từ ngữ tục tĩu độc lập (xuất hiện đơn lẻ là PHẢI che tiếng bíp ngay)
+STANDALONE_PROFANITY_TOKENS = {
+    'địt', 'đit', 'đjt', 'dit', 'djt', 'mịt',
+    'đụ', 'du',
+    'lồn', 'lon', 'lồz', 'loz', 'lôn',
+    'cặc', 'kặc', 'cac', 'cặt',
+    'buồi', 'buoi', 'bùi', 'buôi', 'buổi', 'bổi',
+    'đĩ', 'di', 'phò', 'pho',
+    'đéo', 'deo', 'đek', 'đếch',
+    'đm', 'đmm', 'đcm', 'dmm', 'dcm', 'dm',
+    'vcl', 'vl', 'vcc', 'clm', 'clgt', 'vkl', 'vcll',
+}
+
 PHONETIC_WORD_MAP = {
     'lôn': 'lồn',
     'lồz': 'lồn',
@@ -201,14 +243,20 @@ PHONETIC_WORD_MAP = {
     'đjt': 'địt',
     'dit': 'địt',
     'djt': 'địt',
+    'mịt': 'địt',
+    'mít': 'địt',
     'buoi': 'buồi',
     'bùi': 'buồi',
     'buôi': 'buồi',
+    'buổi': 'buồi',
+    'bổi': 'buồi',
     'kặc': 'cặc',
     'cac': 'cặc',
     'cặt': 'cặc',
+    'mồn': 'mồm',
     'nhợn': 'nhờn',
     'nhớt': 'nhờn',
+    'bỡi': 'vỡ',
 }
 
 PHONETIC_REGEX_FIXES = [
@@ -231,6 +279,14 @@ PHONETIC_REGEX_FIXES = [
     (r'(?i)\b(một|mùa)\s+xíu\s+vật\b', 'đồ súc vật'),
     (r'(?i)\btao\s+(lại|lạy)\s+(máy|mậy)\b', 'tao lạy mày'),
     (r'(?i)\bđánh\s+bỡi\b', 'đánh vỡ mồm'),
+    (r'(?i)\bcầm\s+mẹ\s+cái\s+mồn\b', 'câm mẹ cái mồm'),
+    (r'(?i)\bvới\s+mồn\s+mày\b', 'vỡ mồm mày'),
+    (r'(?i)\bvới\s+mồm\s+mày\b', 'vỡ mồm mày'),
+    (r'(?i)\bcận\s+dịch\b', 'cần cặc'),
+    (r'(?i)\bđau\s+bùi\b', 'đầu buồi'),
+    (r'(?i)\blắm\s+bùi\b', 'lắm buồi'),
+    (r'(?i)\bbuổi\s+(nha|lắm|như|mày)\b', r'buồi \1'),
+    (r'(?i)\bcủa\s+tổ\s+này\b', 'cả lò nhà mày'),
 ]
 
 
@@ -270,6 +326,13 @@ def get_whisper_waveform(audio_segment: AudioSegment) -> np.ndarray:
 def _normalized_text(text: str) -> str:
     text = unicodedata.normalize("NFC", text or "").strip()
     return re.sub(r"\s+", " ", text)
+
+
+def is_whisper_censor_token(raw_word: str) -> bool:
+    """Check if Whisper automatically masked the word with asterisks (e.g. b****t, đ***, etc.)"""
+    if not raw_word:
+        return False
+    return '*' in raw_word or '***' in raw_word
 
 
 def _clean_word_for_matching(raw_word: str) -> str:
@@ -318,35 +381,47 @@ def transcribe_vietnamese(model, audio_segment: AudioSegment, vad_filter: bool =
     if waveform.size == 0:
         return "", [], [], 0.0
 
-    segments, _ = model.transcribe(
-        waveform,
-        language="vi",
-        task="transcribe",
-        beam_size=5,
-        best_of=5,
-        temperature=0.0,
-        word_timestamps=True,
-        vad_filter=vad_filter,
-        vad_parameters={
-            "threshold": 0.35,
-            "min_speech_duration_ms": 100,
-            "min_silence_duration_ms": 500,
-            "speech_pad_ms": 350,
-        },
-        condition_on_previous_text=False,
-        no_speech_threshold=0.6,
-        log_prob_threshold=-1.5,
-        compression_ratio_threshold=2.4,
-        repetition_penalty=1.05,
-        hallucination_silence_threshold=1.5,
-        initial_prompt=VIETNAMESE_PROMPT,
-    )
+    # VAD tuned so shouting and curses are never dropped
+    vad_params = {
+        "threshold": 0.20,
+        "min_speech_duration_ms": 100,
+        "min_silence_duration_ms": 400,
+        "speech_pad_ms": 400,
+    }
+
+    def _run_transcribe(use_vad: bool):
+        return model.transcribe(
+            waveform,
+            language="vi",
+            task="transcribe",
+            beam_size=5,
+            best_of=5,
+            temperature=0.0,
+            word_timestamps=True,
+            vad_filter=use_vad,
+            vad_parameters=vad_params if use_vad else None,
+            condition_on_previous_text=False,
+            no_speech_threshold=0.6,
+            log_prob_threshold=-1.5,
+            compression_ratio_threshold=2.4,
+            repetition_penalty=1.05,
+            hallucination_silence_threshold=1.5,
+            initial_prompt=VIETNAMESE_PROMPT,
+        )
+
+    segments_gen, _ = _run_transcribe(vad_filter)
+    raw_segments = list(segments_gen)
+
+    # Fallback: if VAD dropped all speech on an audio clip >= 3 seconds, retry without VAD
+    if vad_filter and len(raw_segments) == 0 and len(audio_segment) >= 3000 and audio_segment.max_dBFS > -50:
+        segments_gen, _ = _run_transcribe(False)
+        raw_segments = list(segments_gen)
 
     accepted_segments = []
     words = []
     texts = []
     probabilities = []
-    for segment in segments:
+    for segment in raw_segments:
         if not _accept_segment(segment):
             continue
 
@@ -376,10 +451,16 @@ def censor_audio_and_text(
     transcript: str,
     whisper_words: list,
     profanity_list: list = None,
-    padding_ms: int = 90,
-    beep_gain: float = -8.0,
+    padding_ms: int = 180,
+    beep_gain: float = 0.0,
 ) -> Tuple[AudioSegment, str, List[Tuple[int, int]]]:
     """Overlays 1000Hz Sine tone over profanity words in audio and replaces words with '***' in text.
+    
+    Uses robust multi-layer detection:
+    1. Compound profanity phrases matching.
+    2. Standalone swear words matching (e.g. 'địt', 'đụ', 'lồn', 'cặc', 'buồi', 'đéo', 'đĩ', etc.).
+    3. Auto-censored Whisper tokens matching (words containing '*' like 'b****t', 'đ***').
+    4. Safety acoustic padding (180ms) and close-interval merging (200ms) to ensure zero vocal leak.
     
     Returns:
         (censored_audio, censored_transcript, intervals_beeped)
@@ -418,6 +499,7 @@ def censor_audio_and_text(
             continue
         start_ms = int(getattr(w, "start", 0.0) * 1000)
         end_ms = int(getattr(w, "end", 0.0) * 1000)
+        has_star = is_whisper_censor_token(raw)
 
         tokens = clean_w.split()
         if len(tokens) > 1:
@@ -425,22 +507,26 @@ def censor_audio_and_text(
             duration_per_token = (end_ms - start_ms) / len(tokens)
             for idx, tok in enumerate(tokens):
                 words_map.append({
+                    "raw": raw,
                     "clean": tok,
                     "start": int(start_ms + idx * duration_per_token),
                     "end": int(start_ms + (idx + 1) * duration_per_token),
+                    "is_censor_token": has_star,
                 })
         else:
             words_map.append({
+                "raw": raw,
                 "clean": clean_w,
                 "start": max(0, start_ms),
                 "end": max(0, end_ms),
+                "is_censor_token": has_star,
             })
 
     total_duration = len(audio_segment)
     intervals_to_beep = []
-
-    # Match single words and compound n-grams against profanity list
     num_words = len(words_map)
+
+    # Layer A: Match compound n-grams against profanity list
     for p in normalized_profanity:
         p_tokens = p.split()
         k = len(p_tokens)
@@ -456,15 +542,23 @@ def censor_audio_and_text(
                 if end_padded > start_padded:
                     intervals_to_beep.append((start_padded, end_padded))
 
+    # Layer B: Match standalone profanity tokens and Whisper auto-censored tokens (b****t, đ***, etc.)
+    for wm in words_map:
+        if wm["clean"] in STANDALONE_PROFANITY_TOKENS or wm["is_censor_token"]:
+            start_padded = max(0, wm["start"] - padding_ms)
+            end_padded = min(total_duration, wm["end"] + padding_ms)
+            if end_padded > start_padded:
+                intervals_to_beep.append((start_padded, end_padded))
+
     if not intervals_to_beep or len(audio_segment) == 0:
         return audio_segment, censored_transcript, []
 
-    # 3. Merge overlapping or very close intervals (within 100ms)
+    # 3. Merge overlapping or very close intervals (within 200ms to avoid tiny gap leaks)
     intervals_to_beep.sort(key=lambda x: x[0])
     merged_intervals = [list(intervals_to_beep[0])]
     for current in intervals_to_beep[1:]:
         last = merged_intervals[-1]
-        if current[0] <= last[1] + 100:
+        if current[0] <= last[1] + 200:
             last[1] = max(last[1], current[1])
         else:
             merged_intervals.append(list(current))
